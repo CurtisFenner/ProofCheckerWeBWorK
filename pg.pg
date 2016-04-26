@@ -1,0 +1,64 @@
+#---------------------------------------------------------------------------------------------------------------------
+# tagging and description section
+#---------------------------------------------------------------------------------------------------------------------
+
+# DESCRIPTION
+# Sample WeBWorK problem, using PGML
+# ENDDESCRIPTION
+# Library tagging would go here
+
+#---------------------------------------------------------------------------------------------------------------------
+# initialization section
+#---------------------------------------------------------------------------------------------------------------------
+
+DOCUMENT();
+loadMacros(
+	"PGstandard.pl",
+	"MathObjects.pl",
+	"PGML.pl",
+	"proofchecker.pl",
+	"parserMultiAnswer.pl"
+);
+
+# $M = Matrix(0, 1);
+# @x = split //, ($M -> ans_array);
+# $x = join(',', @x);
+
+# https://github.com/openwebwork/pg/blob/master/macros/parserMultiAnswer.pl
+
+$obj = new ProofChecker('(P, (+, (cos, 5), 1))');
+
+$obj -> given("(forall, x, (P, (+, x, 1)) )");
+
+$obj -> axiom({
+	name => 'Universal Elimination',
+	depends => ["for all statement"], # the names of statements it depends on
+	test => sub {
+		my $H = shift; # helpers
+		my $line = shift;
+		my $forall = shift;
+		#
+		my $M = $H -> {'Match'};
+		my $P = $H -> {'P'};
+		my $Substitute = $H -> {'Substitute'};
+		my $S = $H -> {'Stringify'};
+		#
+		my $forallPattern = &$P('(forall, @variable, @predicate)');
+		my $fam = &$M($forallPattern, $forall);
+		if (!$fam) {
+			return "not a forall statement";
+		}
+		my $instancePattern = &$Substitute($fam->{'variable'}, '@x', $fam -> {'predicate'});
+		if (!&$M($instancePattern, $line)) {
+			return "not a valid instantiation of " . &$S($forall);
+		}
+		return 0;
+	}
+});
+
+$obj -> show();
+
+
+ENDDOCUMENT();
+
+
