@@ -91,3 +91,10 @@ ANS( checker2 ); # define checker for first blank
 	});
 
 	$obj -> show();
+
+# FormulaUpToConstant replaces the context's Variables parser. The replacement
+# adds any variables that have not yet been defined (given that they're
+# acceptable constants -- one letter long)
+
+# Look at fraction context for something that tears up the operators
+
