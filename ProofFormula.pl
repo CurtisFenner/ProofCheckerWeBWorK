@@ -88,13 +88,18 @@ sub new {
 	$context->{'parser'}{'Function'} = 'ProofFormula::Function';
 	$context -> flags -> set('allowBadOperands' => 1);
 	$context -> flags -> set('allowBadFunctionInputs' => 1);
+	#
+	my $oldpatterns = $context -> {'_variables'} {'patterns'};
+	$context -> {'_variables'}{'patterns'} = {qr/@?[a-zA-Z][a-zA-Z0-9]*/i	=> [5, 'var']};
+	#
+	main::TEXT( main::pretty_print($oldpatterns) );
 	$context ->operators->add(
 		'$' => {
 			class => 'Parser::BOP::power',
 			precedence => 1000,         #  just below addition
 			associativity => 'left',     #  computed left to right
 			type => 'bin',               #  binary operator
-			string => '',             #  output string for it (default is the operator name with no spaces)
+			string => '$',             #  output string for it (default is the operator name with no spaces)
 			TeX => '',       #  TeX version (overridden above, but just an example)
 		}
 	);
@@ -291,11 +296,15 @@ sub new {
 	my $variables = $equation->{context}{variables};
 	my ($name, $ref) = @_;
 	my $def = $variables->{$name};
+	my $pattern = substr($name, 0, 1) eq '@';
+	if ($pattern) {
+		$name = substr($name, 1);
+	}
 	#
 	#	If the variable is not already in the context, add it
 	#		and mark it as an arbitrary constant (for later reference)
 	#
-	if (!defined($def) && length($name) eq 1) {
+	if (!defined($def)) {
 		$equation->{context}->variables->add($name => 'Real');
 		$equation->{context}->variables->set($name => {arbitraryConstant => 1});
 		$def = $variables->{$name};
@@ -303,7 +312,9 @@ sub new {
 	#
 	#	Do the usual Variable stuff.
 	#
-	$self->SUPER::new($equation, $name, $ref);
+	my $v = $self->SUPER::new($equation, $name, $ref);
+	$v -> {'pattern'} = $name;
+	return $v;
 }
 
 package ProofFormula::Function;
