@@ -64,6 +64,7 @@ sub new {
 	#
 	my $context = (Value::isContext($_[0]) ? shift : $self->context)->copy;
 	$context->{'parser'}{'Variable'} = 'ProofFormula::Variable';
+	$context->{'parser'}{'Function'} = 'ProofFormula::Function';
 	#
 	#	Create a formula from the user's input.
 	#
@@ -269,5 +270,9 @@ sub new {
 	#
 	$self->SUPER::new($equation, $name, $ref);
 }
+
+package ProofFormula::Function;
+our @ISA = ('Parser::Function');
+# TODO...
 
 1;
