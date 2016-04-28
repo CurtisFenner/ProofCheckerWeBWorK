@@ -85,8 +85,12 @@ sub new {
 	# Suppress most of the error checking done by the built-in context / parser:
 	$context->{'parser'}{'Variable'} = 'ProofFormula::Variable';
 	$context->{'parser'}{'Function'} = 'ProofFormula::Function';
-	$context -> flags -> set('allowBadOperands' => 1);
-	$context -> flags -> set('allowBadFunctionInputs' => 1);
+	$context -> flags -> set(
+		'allowBadOperands' => 1,
+		'allowBadFunctionInputs' => 1,
+		'reduceConstants' => 0,
+		'reduceConstantFunctions' => 0,
+	);
 	# Allow pattern variables that start with '@'
 	my $oldpatterns = $context -> {'_variables'} {'patterns'};
 	$context -> {'_variables'}{'patterns'} = {qr/@?[a-zA-Z][a-zA-Z0-9]*/i	=> [5, 'var']};
@@ -116,6 +120,74 @@ sub new {
 	#
 	$f->{adapt} = $f;
 	return bless $f, $class;
+}
+
+################################################################################
+
+sub _same {
+	my $self = shift;
+	my $other = shift;
+	return defined(_match($self, $other, {}));
+}
+
+sub _match {
+	my $self = shift; # a ProofFormula
+	my $pattern = shift; # a ProofFormula
+	my $matches = shift;
+	#
+	#main::TEXT("<hr>");
+	#main::TEXT( ($self) . " VERSUS " . ($pattern) );
+	#main::TEXT("<hr>");
+	#
+	if (defined($pattern -> {'hole'})) {
+		# match against just a variable
+		my $var = $pattern -> {'hole'};
+		if ($matches -> {$var}) {
+			my $old = $matches -> {$var};
+			my $same = _same($self, $old);
+			if ($same) {
+				return $matches;
+			} else {
+				return undef; # second time found, did not match
+			}
+		} else {
+			$matches -> {$var} = $self;
+			return $matches;
+		}
+	} elsif (defined($pattern -> {'bop'})) {
+		if (!defined($self -> {'bop'})) {
+			return undef;
+		}
+		return _match($self -> {'lop'}, $pattern -> {'lop'}, $matches)
+			&& _match($self -> {'rop'}, $pattern -> {'rop'}, $matches);
+	} elsif ($pattern -> {'isConstant'}) {
+		if ($self -> {'isConstant'} && $self -> {'value'} eq $pattern -> {'value'}) {
+			return $matches;
+		} else {
+			return undef;
+		}
+	} elsif (defined($pattern -> {'name'})) {
+		if ($self -> {'name'} eq $pattern -> {'name'}) {
+			return $matches;
+		} else {
+			return undef;
+		}
+	} else {
+		main::TEXT($main::BR . main::pretty_print($pattern) . $main::BR)
+	}
+	return undef;
+}
+
+# Rule primitives
+sub Same {
+	my $self = shift;
+	my $other = shift;
+	return _same($self -> {'tree'}, $other -> {'tree'});
+}
+sub Match {
+	my $self = shift;
+	my $pattern = shift;
+	return _match($self -> {'tree'}, $pattern -> {'tree'}, {});
 }
 
 ##################################################
@@ -293,11 +365,12 @@ sub new {
 	#my $class = ref($self) || $self;
 	my $variables = $equation->{context}{variables};
 	my ($name, $ref) = @_;
-	my $def = $variables->{$name};
 	my $pattern = substr($name, 0, 1) eq '@';
 	if ($pattern) {
 		$name = substr($name, 1);
 	}
+	my $def = $variables->{$name};
+
 	#
 	#	If the variable is not already in the context, add it
 	#		and mark it as an arbitrary constant (for later reference)
@@ -311,7 +384,9 @@ sub new {
 	#	Do the usual Variable stuff.
 	#
 	my $v = $self->SUPER::new($equation, $name, $ref);
-	$v -> {'pattern'} = $name;
+	if ($pattern) {
+		$v -> {'hole'} = $name;
+	}
 	return $v;
 }
 

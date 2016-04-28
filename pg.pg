@@ -21,8 +21,10 @@ loadMacros(
 );
 loadMacros('ProofFormula.pl');
 
-my $v = ProofFormula('5 + f(a,y)');
-TEXT($v);
+my $alpha = ProofFormula('Q(5 + 1)');
+my $pattern = ProofFormula('Q(@x + @x)');
+$match = $alpha -> Match($pattern);
+TEXT( "MATCH:" . pretty_print($match) );
 
 # $M = Matrix(0, 1);
 # @x = split //, ($M -> ans_array);
