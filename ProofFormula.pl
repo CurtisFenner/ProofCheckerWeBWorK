@@ -68,7 +68,6 @@ sub preprocess {
 		}
 		$out = $out . $c;
 	}
-	#main::TEXT("preprocess('$str') -> '$out'");
 	return $out;
 }
 
@@ -83,24 +82,23 @@ sub new {
 	#	replace the usual Variable object with our own.
 	#
 	my $context = (Value::isContext($_[0]) ? shift : $self->context)->copy;
-
+	# Suppress most of the error checking done by the built-in context / parser:
 	$context->{'parser'}{'Variable'} = 'ProofFormula::Variable';
 	$context->{'parser'}{'Function'} = 'ProofFormula::Function';
 	$context -> flags -> set('allowBadOperands' => 1);
 	$context -> flags -> set('allowBadFunctionInputs' => 1);
-	#
+	# Allow pattern variables that start with '@'
 	my $oldpatterns = $context -> {'_variables'} {'patterns'};
 	$context -> {'_variables'}{'patterns'} = {qr/@?[a-zA-Z][a-zA-Z0-9]*/i	=> [5, 'var']};
-	#
-	main::TEXT( main::pretty_print($oldpatterns) );
+	# Add function application operator:
 	$context ->operators->add(
 		'$' => {
 			class => 'Parser::BOP::power',
-			precedence => 1000,         #  just below addition
-			associativity => 'left',     #  computed left to right
-			type => 'bin',               #  binary operator
-			string => '$',             #  output string for it (default is the operator name with no spaces)
-			TeX => '',       #  TeX version (overridden above, but just an example)
+			precedence => 1000,       # very high?
+			associativity => 'left',  #  computed left to right
+			type => 'bin',            #  binary operator
+			string => '$',            #  output string for it
+			TeX => '',                #  TeX version
 		}
 	);
 	#
