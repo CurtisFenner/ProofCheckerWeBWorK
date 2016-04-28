@@ -21,9 +21,6 @@ loadMacros(
 );
 loadMacros('ProofFormula.pl');
 
-Context() -> flags -> set("allowBadFunctionInputs" => 1);
-Context() -> flags -> set("allowBadOperands" => 1);
-
 my $v = ProofFormula('5 + f(a,y)');
 TEXT($v);
 

@@ -52,6 +52,26 @@ sub Init {
 
 Init();
 
+sub preprocess {
+	my $str = shift;
+	if (length($str) <= 1) {
+		return $str;
+	}
+	my $out = substr($str, 0, 1);
+	for (my $i = 1; $i < length($str); $i++) {
+		$p = substr($str, $i-1, 1);
+		$c = substr($str, $i, 1);
+		if (lc($p) ne uc($p)) {
+			if ($c eq '(') {
+				$out = $out . '$';
+			}
+		}
+		$out = $out . $c;
+	}
+	#main::TEXT("preprocess('$str') -> '$out'");
+	return $out;
+}
+
 #
 #	Create an instance of a ProofFormula.	If no constant
 #	is supplied, we add C ourselves.
@@ -63,12 +83,27 @@ sub new {
 	#	replace the usual Variable object with our own.
 	#
 	my $context = (Value::isContext($_[0]) ? shift : $self->context)->copy;
+
 	$context->{'parser'}{'Variable'} = 'ProofFormula::Variable';
 	$context->{'parser'}{'Function'} = 'ProofFormula::Function';
+	$context -> flags -> set('allowBadOperands' => 1);
+	$context -> flags -> set('allowBadFunctionInputs' => 1);
+	$context ->operators->add(
+		'$' => {
+			class => 'Parser::BOP::power',
+			precedence => 1000,         #  just below addition
+			associativity => 'left',     #  computed left to right
+			type => 'bin',               #  binary operator
+			string => '',             #  output string for it (default is the operator name with no spaces)
+			TeX => '',       #  TeX version (overridden above, but just an example)
+		}
+	);
 	#
 	#	Create a formula from the user's input.
 	#
-	my $f = main::Formula($context, @_);
+	my @arg = @_;
+	$arg[0] = preprocess($arg[0]);
+	my $f = main::Formula($context, @arg);
 	#
 	#	Make a version with adaptive parameters for use in the
 	#	comparison later on.	We would like n00*C, but already have $n
