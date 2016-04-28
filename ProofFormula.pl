@@ -130,6 +130,41 @@ sub _same {
 	return defined(_match($self, $other, {}));
 }
 
+sub _tostr {
+	my $self = shift;
+	if ($self -> {'name'}) {
+		return $self -> {'name'};
+	} elsif ($self -> {'bop'}) {
+		return '(' . _tostr($self -> {'lop'}) . ' ' . $self -> {'bop'} . ' ' . _tostr($self -> {'rop'}) . ')';
+	} elsif ($self -> {'isConstant'}) {
+		return $self -> {'value_string'};
+	} else {
+		main::TEXT( main::pretty_print($self) );
+		return undef;
+	}
+}
+
+sub _substitute {
+	my $self = shift;
+	my $needle = shift;
+	my $replacement = shift;
+	if (_same($self, $needle)) {
+		return $replacement;
+	}
+	if ($self -> {'name'} || $self -> {'isConstant'}) {
+		return $self;
+	} elsif ($self -> {'bop'}) {
+		return {
+			'bop' => $self -> {'bop'},
+			'lop' => _substitute($self -> {'lop'}, $needle, $replacement),
+			'rop' => _substitute($self -> {'rop'}, $needle, $replacement),
+		};
+	} else {
+		main::TEXT( main::pretty_print($self) );
+		return undef;
+	}
+}
+
 sub _match {
 	my $self = shift; # a ProofFormula
 	my $pattern = shift; # a ProofFormula
@@ -167,6 +202,9 @@ sub _match {
 			return undef;
 		}
 	} elsif (defined($pattern -> {'name'})) {
+		if (!defined($self -> {'name'})) {
+			return undef;
+		}
 		if ($self -> {'name'} eq $pattern -> {'name'}) {
 			return $matches;
 		} else {
@@ -188,6 +226,14 @@ sub Match {
 	my $self = shift;
 	my $pattern = shift;
 	return _match($self -> {'tree'}, $pattern -> {'tree'}, {});
+}
+
+sub Replace {
+	my $self = shift;
+	my $pattern = shift;
+	my $replacement = shift;
+	my $tree = _substitute($self -> {'tree'}, $pattern -> {'tree'}, $replacement -> {'tree'});
+	return main::ProofFormula(_tostr($tree));
 }
 
 ##################################################
