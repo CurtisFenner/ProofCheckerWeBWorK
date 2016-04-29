@@ -236,6 +236,9 @@ sub _match {
 		if (!defined($self -> {'bop'})) {
 			return undef;
 		}
+		if ($self -> {'bop'} ne $pattern -> {'bop'}) {
+			return undef;
+		}
 		return _match($self -> {'lop'}, $pattern -> {'lop'}, $matches)
 			&& _match($self -> {'rop'}, $pattern -> {'rop'}, $matches);
 	} elsif ($pattern -> {'isConstant'}) {
