@@ -144,15 +144,15 @@ sub _tostr {
 		return '(' . _tostr($self -> {'lop'}) . ' ' . $self -> {'bop'} . ' ' . _tostr($self -> {'rop'}) . ')';
 	} elsif ($self -> {'isConstant'}) {
 		return $self -> {'value_string'};
-	} elsif ($self -> {'coords'}) {
+	} elsif (defined($self -> {'coords'})) {
 		my @elements = @{$self -> {'coords'}};
 		for (my $i = 0; $i < scalar @elements; $i++) {
 			$elements[$i] = _tostr($elements[$i]);
 		}
 		return "(" . join(", ", @elements) . ")";
 	} else {
-		main::TEXT( main::pretty_print($self) );
-		return undef;
+		main::TEXT( "_tostr couldn't handle:" . main::pretty_print($self) );
+		return "UNKNOWN";
 	}
 }
 
@@ -175,6 +175,14 @@ sub _substitute {
 			'bop' => $self -> {'bop'},
 			'lop' => _substitute($self -> {'lop'}, $needle, $replacement),
 			'rop' => _substitute($self -> {'rop'}, $needle, $replacement),
+		};
+	} elsif (defined($self -> {'coords'})) {
+		my @elements = @{$self -> {'coords'}};
+		for (my $i = 0; $i < scalar @elements; $i++) {
+			$elements[$i] = _substitute($elements[$i], $needle, $replacement);
+		}
+		return {
+			'coords' => \@elements,
 		};
 	} else {
 		main::TEXT( main::pretty_print($self) );
@@ -263,7 +271,7 @@ sub Replace {
 	my $pattern = shift;
 	my $replacement = shift;
 	my $tree = _substitute($self -> {'tree'}, $pattern -> {'tree'}, $replacement -> {'tree'});
-	return main::ProofFormula(_tostr($tree));
+	return _tostr($tree);
 }
 
 ##################################################

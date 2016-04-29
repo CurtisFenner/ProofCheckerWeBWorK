@@ -21,11 +21,16 @@ loadMacros(
 );
 loadMacros('ProofFormula.pl');
 
-my $text = 'Q(5, y)';
+my $text = 'Q(y+1, y)';
 my $alpha = ProofFormula($text);
 my $beta = ProofFormula('Q(@x, @x)');
+my $gamma = ProofFormula('y+1');
 
-TEXT("//$alpha//$beta//" . $beta -> Tostr() );
+my $result = $alpha -> Replace($gamma, $gamma, ProofFormula('2+3'));
+
+my $match = $alpha -> Match($beta);
+
+TEXT( "<hr><hr><hr>" . (defined($result) && $result) );
 #my $alpha = ProofFormula('Q(5, y)');
 #$match = $alpha -> Replace( ProofFormula('y'), ProofFormula('x+1') );
 #TEXT("match: /$match/");
