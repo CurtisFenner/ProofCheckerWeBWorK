@@ -206,6 +206,19 @@ sub _match {
 			$matches -> {$var} = $self;
 			return $matches;
 		}
+	} elsif (defined($pattern -> {'coords'})) {
+		if (!defined($self -> {'coords'})) {
+			return undef;
+		}
+		@patterns = @{$pattern -> {'coords'}};
+		@selfs = @{$self -> {'coords'}};
+		if (scalar @patterns != scalar @selfs) {
+			return undef;
+		}
+		for (my $i = 0; $i < scalar @selfs; $i++) {
+			$matches = $matches && _match($selfs[$i], $patterns[$i], $matches);
+		}
+		return $matches;
 	} elsif (defined($pattern -> {'bop'})) {
 		if (!defined($self -> {'bop'})) {
 			return undef;
