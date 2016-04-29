@@ -58,15 +58,18 @@ sub preprocess {
 		return $str;
 	}
 	my $out = substr($str, 0, 1);
+	my $prev = $out;
 	for (my $i = 1; $i < length($str); $i++) {
-		$p = substr($str, $i-1, 1);
-		$c = substr($str, $i, 1);
-		if (lc($p) ne uc($p)) {
+		my $c = substr($str, $i, 1);
+		if (lc($prev) ne uc($prev)) {
 			if ($c eq '(') {
 				$out = $out . '$';
 			}
 		}
 		$out = $out . $c;
+		if ($c =~ /^\s*$/) {} else {
+			$prev = $c;
+		}
 	}
 	return $out;
 }
