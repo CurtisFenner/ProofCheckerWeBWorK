@@ -21,9 +21,14 @@ loadMacros(
 );
 loadMacros('ProofFormula.pl');
 
-my $alpha = ProofFormula('Q(5 + y)');
-$match = $alpha -> Replace( ProofFormula('y'), ProofFormula('x+1') );
-TEXT($match);
+my $text = 'Q(5, y)';
+my $alpha = ProofFormula($text);
+my $beta = ProofFormula('Q(@x, @x)');
+
+TEXT("//$alpha//$beta//" . $beta -> Tostr() );
+#my $alpha = ProofFormula('Q(5, y)');
+#$match = $alpha -> Replace( ProofFormula('y'), ProofFormula('x+1') );
+#TEXT("match: /$match/");
 
 # $M = Matrix(0, 1);
 # @x = split //, ($M -> ans_array);

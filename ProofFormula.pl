@@ -87,7 +87,7 @@ sub new {
 	my $context = (Value::isContext($_[0]) ? shift : $self->context)->copy;
 	# Suppress most of the error checking done by the built-in context / parser:
 	$context->{'parser'}{'Variable'} = 'ProofFormula::Variable';
-	$context->{'parser'}{'Function'} = 'ProofFormula::Function';
+	# $context->{'parser'}{'Function'} = 'ProofFormula::Function';
 	$context -> flags -> set(
 		'allowBadOperands' => 1,
 		'allowBadFunctionInputs' => 1,
@@ -136,15 +136,29 @@ sub _same {
 sub _tostr {
 	my $self = shift;
 	if ($self -> {'name'}) {
+		if ($self -> {'hole'}) {
+			return '@' . $self->{'name'};
+		}
 		return $self -> {'name'};
 	} elsif ($self -> {'bop'}) {
 		return '(' . _tostr($self -> {'lop'}) . ' ' . $self -> {'bop'} . ' ' . _tostr($self -> {'rop'}) . ')';
 	} elsif ($self -> {'isConstant'}) {
 		return $self -> {'value_string'};
+	} elsif ($self -> {'coords'}) {
+		my @elements = @{$self -> {'coords'}};
+		for (my $i = 0; $i < scalar @elements; $i++) {
+			$elements[$i] = _tostr($elements[$i]);
+		}
+		return "(" . join(", ", @elements) . ")";
 	} else {
 		main::TEXT( main::pretty_print($self) );
 		return undef;
 	}
+}
+
+sub Tostr {
+	my $self = shift;
+	return _tostr( $self -> {'tree'} );
 }
 
 sub _substitute {
