@@ -21,16 +21,6 @@ loadMacros(
 );
 loadMacros('ProofFormula.pl');
 
-my $text = 'Q(y+1, y)';
-my $alpha = ProofFormula($text);
-my $beta = ProofFormula('Q(@x, @x)');
-my $gamma = ProofFormula('y+1');
-
-my $result = $alpha -> Replace($gamma, $gamma, ProofFormula('2+3'));
-
-my $match = $alpha -> Match($beta);
-
-TEXT( "<hr><hr><hr>" . (defined($result) && $result) );
 #my $alpha = ProofFormula('Q(5, y)');
 #$match = $alpha -> Replace( ProofFormula('y'), ProofFormula('x+1') );
 #TEXT("match: /$match/");
@@ -41,31 +31,25 @@ TEXT( "<hr><hr><hr>" . (defined($result) && $result) );
 
 # https://github.com/openwebwork/pg/blob/master/macros/parserMultiAnswer.pl
 
-$obj = new ProofChecker('(P, (+, (cos, 5), 1))');
+$obj = new ProofChecker('P( co(5) + 1 )');
 
-$obj -> given("(forall, x, (P, (+, x, 1)) )");
+$obj -> given('forall(x, P(x+1) )');
 
 $obj -> axiom({
 	name => 'Universal Elimination',
 	depends => ["for all statement"], # the names of statements it depends on
 	test => sub {
-		my $H = shift; # helpers
 		my $line = shift;
 		my $forall = shift;
 		#
-		my $M = $H -> {'Match'};
-		my $P = $H -> {'P'};
-		my $Substitute = $H -> {'Substitute'};
-		my $S = $H -> {'Stringify'};
-		#
-		my $forallPattern = &$P('(forall, @variable, @predicate)');
-		my $fam = &$M($forallPattern, $forall);
+		my $forallPattern = ProofFormula('forall(@variable, @predicate)');
+		my $fam = $forall -> Match($forallPattern);
 		if (!$fam) {
 			return "not a forall statement";
 		}
-		my $instancePattern = &$Substitute($fam->{'variable'}, '@x', $fam -> {'predicate'});
-		if (!&$M($instancePattern, $line)) {
-			return "not a valid instantiation of " . &$S($forall);
+		my $instancePattern = $fam -> {'predicate'} -> Replace( $fam -> {'variable'}, ProofFormula('@x') );
+		if (! $line -> Match($instancePattern)) {
+			return "not a valid instantiation of " . $forall;
 		}
 		return 0;
 	}

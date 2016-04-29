@@ -33,8 +33,12 @@ our $counter = 0;
 # Define a constructor for this class
 sub new {
 	my $self = shift;
-	my $target = shift;
+	my $targetStr = shift;
 	my $class = ref($self) || $self; # ??
+	my ($target, $err) = _parse($targetStr);
+	if (!defined($target)) {
+		main::TEXT("TARGET ERROR: $err");
+	}
 	return bless {
 		'_blank_num' => 0,
 		'num_blanks' => 5,
@@ -47,7 +51,7 @@ sub new {
 				},
 			},
 		},
-		'target' => _parse($target),
+		'target' => $target,
 		'givens' => [],
 	}, $class;
 }
@@ -66,94 +70,23 @@ sub axiom {
 sub given {
 	my $self = shift;
 	my $exp = shift;
-	my $statement = _parse($exp);
+	my ($statement, $err) = _parse($exp);
+	if (!defined($statement)) {
+		main::TEXT("GIVEN ERROR: $err");
+	}
 	my $givens = $self -> {'givens'};
 	push @$givens, $statement;
 }
 
 ################################################################################
-# S-expression parser
-
-sub _balanced {
-	my $str = shift;
-	my $from = shift;
-	my $r = 0;
-	for (my $i = $from; $i < length($str); $i++) {
-		$c = substr($str, $i, 1);
-		if ($c eq "(") {
-			$r++;
-		}
-		if ($c eq ")") {
-			$r--;
-		}
-		if ($r == 0) {
-			return $i+1;
-		}
-	}
-	return -1;
-}
-
 # Parses a string into an expression.
-# TODO: use MathObjects instead
-# Currently uses S-expression syntax
-# (forall, x, (., P, x))
 sub _parse {
 	my $str = shift;
-	$str =~ s/\s+//g; # remove all whitespace
-	if (length($str) == 0) {
-		return undef;
+	if (index($str, "'") >= 0 || index($str, "\\") >= 0) {
+		return (undef, "cannot contain single quote or backslash");
 	}
-	if (substr($str, 0, 1) eq "(") {
-		if (_balanced($str, 0) != length($str)) {
-			return undef; # syntax error
-		}
-		my @divs = ();
-		for (my $i = 1; $i < length($str)-1; $i++) {
-			my $c = substr($str, $i, 1);
-			if ($c eq ",") {
-				push @divs, $i;
-			}
-			if ($c eq "(") {
-				$i = _balanced($str, $i)-1;
-				if ($i < 0) {
-					return undef;
-				}
-			}
-		}
-		push @divs, length($str)-1;
-		my $last = 1;
-		my @r = ();
-		for (my $i = 0; $i < scalar @divs; $i++) {
-			my $x = _parse( substr($str, $last, $divs[$i] - $last) );
-			if (!defined($x)) {
-				return undef;
-			}
-			push @r, $x;
-			$last = $divs[$i] + 1;
-		}
-		return \@r;
-	} else {
-		if (index($str, ",") >= 0 || index($str, "(") >= 0 || index($str, ")") >= 0) {
-			return undef; # syntax error
-		}
-		return $str;
-	}
-}
-
-sub _stringify {
-	my $obj = shift;
-	if (ref($obj)) {
-		my @a = @$obj;
-		my $s = '';
-		for (my $i = 0; $i < scalar @a; $i++) {
-			if ($i > 0) {
-				$s = $s . ", ";
-			}
-			$s = $s . _stringify($a[$i]);
-		}
-		return "(" . $s . ")"
-	}
-	return "'$obj'";
+	my ($obj, $err) = main::PG_restricted_eval("ProofFormula('$str')");
+	return ($obj, $err);
 }
 
 ################################################################################
@@ -190,114 +123,6 @@ sub _get_blank {
 }
 
 
-
-################################################################################
-# helpers
-
-# Returns whether two statements are the same
-# TODO: Add options for cleanup & associativity & commutativity
-sub _Same {
-	my $left = shift;
-	my $right = shift;
-	if (ref($left) ne ref($right)) {
-		return 0;
-	}
-	if (ref($left)) {
-		my @a = @$left;
-		my @b = @$right;
-		if (scalar @a != scalar @b) {
-			return 0;
-		}
-		for (my $i = 0; $i < scalar @a; $i++) {
-			if (!_Same($a[$i], $b[$i])) {
-				return 0;
-			}
-		}
-		return 1;
-	} else {
-		return $left eq $right;
-	}
-}
-
-# Returns an expression with some subexpression (pattern) replaced with
-# (replacement)
-sub _Substitute {
-	my $pattern = shift;
-	my $replacement = shift;
-	my $haystack = shift;
-	if (_Same($pattern, $haystack)) {
-		return $replacement;
-	}
-	if (ref($haystack)) {
-		my @a = @$haystack;
-		my @r = ();
-		for (my $i = 0; $i < scalar @a; $i++) {
-			push @r, _Substitute($pattern, $replacement, $a[$i]);
-		}
-		return \@r;
-	} else {
-		return $haystack;
-	}
-}
-
-# $map = _Match(  $pattern, $expression [, $map])
-# 'pattern' is an expression that uses strings beginning '@' to mark variables.
-# The result is a reference to a hash where the keys are the variables (sans @)
-# holding the matched variable.
-# Variables can be repeated.
-# If it doesn't match, returns 0 instead.
-sub _Match {
-	my $pattern = shift;
-	my $haystack = shift;
-	my $map = shift;
-	if (!defined($map)) {
-		$map = {};
-	}
-	if (!ref($pattern)) {
-		if (substr($pattern, 0, 1) eq '@') {
-			# a pattern matching variable
-			$key = substr($pattern, 1);
-			if (defined($map -> {$key})) {
-				if (!_Same($map -> {$key}, $haystack)) {
-					return 0;
-				}
-			} else {
-				$map -> {$key} = $haystack;
-			}
-			return $map;
-		} else {
-			if (!_Same($pattern, $haystack)) {
-				return 0;
-			} else {
-				return $map;
-			}
-		}
-	} else {
-		# pattern is a ref
-		if (!ref($haystack)) {
-			return 0;
-		}
-		@p = @$pattern;
-		@h = @$haystack;
-		if (scalar @p != scalar @h) {
-			return 0;
-		}
-		for (my $i = 0; $i < scalar @p; $i++) {
-			$map = $map && _Match($p[$i], $h[$i], $map);
-		}
-		return $map;
-	}
-}
-################################################################################
-our $HELPER = {
-	Match => \&_Match,
-	Substitute => \&_Substitute,
-	Same => \&_Same,
-	P => \&_parse,
-	Stringify => \&_stringify,
-};
-
-
 sub _in_scope {
 	my $line = shift;
 	my $references = shift;
@@ -312,7 +137,7 @@ sub _check {
 	my $reasons = shift;
 	my $correct = 1;
 	#
-	@messages = ();
+	my @messages = ();
 	for (my $i = 0; $i < $self->{num_blanks}; $i++) {
 		my $line = $i + 1;
 		#
@@ -326,8 +151,8 @@ sub _check {
 				next;
 			}
 			my @dep = ();
-			$depNamesr = $axiom -> {'depends'};
-			@depNames = @$depNamesr;
+			my $depNamesr = $axiom -> {'depends'};
+			my @depNames = @$depNamesr;
 			for (my $j = 1; $j <= scalar @depNames; $j++) {
 				my $k = $reasons->[$i]->[$j];
 				if (!defined($k) || !$k) {
@@ -345,7 +170,7 @@ sub _check {
 				}
 			}
 			if (!$messages[$i]) {
-				$messages[$i] = $axiom -> {'test'}($HELPER, $statements -> [$i], @dep );
+				$messages[$i] = $axiom -> {'test'}($statements -> [$i], @dep );
 			}
 			if (!$messages[$i]) {
 				$correct = $wasCorrect;
@@ -385,7 +210,7 @@ sub show {
 	my $givens = $self -> {'givens'};
 	for (my $i = 0; $i < scalar @$givens; $i++) {
 		main::TEXT($i+1 . ".  " );
-		main::TEXT( _stringify($givens->[$i]) );
+		main::TEXT( "" . ($givens->[$i]) );
 		main::TEXT(" (given)" . $main::BR);
 	}
 	my $offset = scalar @$givens;
@@ -417,17 +242,17 @@ sub show {
 		}
 		# Get a list of statements (as MathObjects)
 		foreach my $statementBlank (@statementBlanks) {
-			$exp = $self -> _get_blank($statementBlank);
+			my $exp = $self -> _get_blank($statementBlank);
 			$statements[$i] = undef;
 			if ($exp) {
 				$text .= $exp;
-				$f = _parse($exp);
+				my ($f, $err) = _parse($exp);
 				if (!defined($f)) {
-					$problems{$i} = "syntax error";
+					$problems{$i} = "syntax error: $err";
 				} else {
 					#$f = Value::makeValue($exp, context=> main::Context());
 					$statements[$i] = $f;
-					$latex .= "\\text{ " . _stringify($f) . " }"
+					$latex .= "\\text{ " . $f . " }"
 				}
 			} else {
 				$problems{$i} = "";
@@ -458,12 +283,12 @@ sub show {
 		}
 		my $proved = 0;
 		for (my $i = 0; $i < $self -> {'num_blanks'}; $i++) {
-			if (_Same($statements[$i], $self -> {'target'})) {
+			if ( $self -> {'target'} -> Same($statements[$i]) ) {
 				$proved = 1;
 			}
 		}
 		if (!$proved) {
-			$summary .= $main::BR . "You have not yet concluded " . _stringify($self -> {'target'});
+			$summary .= $main::BR . "You have not yet concluded " . ($self -> {'target'});
 		}
 		my $x = new AnswerHash;
 			#a hash containing the results of checking this answer

@@ -98,7 +98,7 @@ sub new {
 	my $oldpatterns = $context -> {'_variables'} {'patterns'};
 	$context -> {'_variables'}{'patterns'} = {qr/@?[a-zA-Z][a-zA-Z0-9]*/i	=> [5, 'var']};
 	# Add function application operator:
-	$context ->operators->add(
+	$context -> operators -> add(
 		'$' => {
 			class => 'Parser::BOP::power',
 			precedence => 1000,       # very high?
@@ -131,6 +131,11 @@ sub _same {
 	my $self = shift;
 	my $other = shift;
 	return defined(_match($self, $other, {}));
+}
+
+sub _form {
+	my $tree = shift;
+	return main::ProofFormula(_tostr($tree));
 }
 
 sub _tostr {
@@ -263,7 +268,15 @@ sub Same {
 sub Match {
 	my $self = shift;
 	my $pattern = shift;
-	return _match($self -> {'tree'}, $pattern -> {'tree'}, {});
+	my $matches = _match($self -> {'tree'}, $pattern -> {'tree'}, {});
+	if (defined($matches)) {
+		foreach my $key (keys %{$matches}) {
+			$matches -> {$key} = _form( $matches -> {$key} );
+		}
+		return $matches;
+	} else {
+		return undef;
+	}
 }
 
 sub Replace {
@@ -271,7 +284,7 @@ sub Replace {
 	my $pattern = shift;
 	my $replacement = shift;
 	my $tree = _substitute($self -> {'tree'}, $pattern -> {'tree'}, $replacement -> {'tree'});
-	return _tostr($tree);
+	return main::ProofFormula(_tostr($tree));
 }
 
 ##################################################
