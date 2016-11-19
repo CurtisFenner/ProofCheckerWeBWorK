@@ -32,7 +32,7 @@ loadMacros('ProofFormula.pl');
 # https://github.com/openwebwork/pg/blob/master/macros/parserMultiAnswer.pl
 
 # 'P(co(5)+1)' is the statement that must be proven
-$proof = new ProofChecker('P( co(5) + 1 )');
+$proof = new ProofChecker('P( cos(5) + 1 )');
 
 # Give a hypothesis of the proof that the student is given to be true
 $proof -> given('forall(x, P(x+1) )');

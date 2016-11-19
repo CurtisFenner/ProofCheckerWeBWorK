@@ -102,6 +102,13 @@ sub new {
 	# Allow pattern variables that start with '@'
 	my $oldpatterns = $context -> {'_variables'} {'patterns'};
 	$context -> {'_variables'}{'patterns'} = {qr/@?[a-zA-Z][a-zA-Z0-9]*/i	=> [5, 'var']};
+
+	# Remove all functions from this context (they interfere with parsing; use preprocess to insert $)
+	$fs = $context->functions;
+	$tokens = $fs->{'tokens'};
+	foreach $f (keys %$tokens) {
+		$context->functions->remove($f);
+	}
 	# Add function application operator:
 	$context -> operators -> add(
 		'$' => {
