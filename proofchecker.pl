@@ -13,7 +13,10 @@ proofchecker.pl - Check a proof-style answer.
 
 Lets you ask for a formal proof of something.
 
-$ac = ProofChecker();
+$ac = ProofChecker('target statement as string');
+$ac -> given('given hypothesis as string');
+
+$ac -> show();
 
 =cut
 
@@ -27,7 +30,7 @@ our $answerPrefix = "proofChecker_"; # answer rule prefix
 our $counter = 0;
 
 =head1 CONSTRUCTOR
-	MultiAnswer();
+	ProofChecker('target statement as string');
 =cut
 
 # Define a constructor for this class
@@ -122,7 +125,7 @@ sub _get_blank {
 	return $inputs -> {$name};
 }
 
-
+# TODO: make this work with subproofs
 sub _in_scope {
 	my $line = shift;
 	my $references = shift;
@@ -130,6 +133,8 @@ sub _in_scope {
 	return $line > $references && $references >= 1;
 }
 
+# Check the proof for validity. It returns information about what is wrong
+# Does NOT check that the proof is for what is needed.
 # my ($messages, $correct, $summary) = $pc -> _check($statements, $reasons);
 sub _check {
 	my $self = shift;
@@ -139,28 +144,40 @@ sub _check {
 	#
 	my @messages = ();
 	for (my $i = 0; $i < $self->{num_blanks}; $i++) {
+		# The human-readable line numbering begins at 1 instead of 0
 		my $line = $i + 1;
-		#
+
+		# Statement on line $line can be checked
+		# (it's not defined if there was a syntax # error or some other problem)
 		if (defined($statements -> [$i])) {
-			my $wasCorrect = $correct;
-			$correct = 0;
 			# Check this statement.
 			$axiom = $self -> {'axioms'} -> {$reasons->[$i][0]};
 			if (!defined($axiom)) {
+				$correct = 0;
 				$messages[$i] = "no such rule '" . $reasons->[$i][0] . "'.";
 				next;
 			}
+
+			# Collect the required expressions that a justification rule
+			# can refer to.
+			# This process can produce problem-messages
+			# (if the referred to statements are out of scope or malformed)
 			my @dep = ();
 			my $depNamesr = $axiom -> {'depends'};
 			my @depNames = @$depNamesr;
 			for (my $j = 1; $j <= scalar @depNames; $j++) {
+				# $k is the line number the student entered the justification refers to
 				my $k = $reasons->[$i]->[$j];
 				if (!defined($k) || !$k) {
+					# The line number isn't a valid line number
 					$messages[$i] = "'$k' is not a valid statement number (needed for " . $depNames[$j-1] . ")";
 				} else {
+					# The line number is a valid number, but it may not be inscope
 					if (!_in_scope($line, $k)) {
 						$messages[$i] = "statement $k is not in scope";
 					} else {
+						# The line may be in scope, but has an unreadable expression
+						# (e.g., due to a syntax error)
 						if (defined($statements -> [$k-1])) {
 							push @dep, $statements -> [$k-1];
 						} else {
@@ -169,11 +186,13 @@ sub _check {
 					}
 				}
 			}
-			if (!$messages[$i]) {
+
+			if ($messages[$i]) {
+				# An error was produced while collecting expressions
+				$correct = 0;
+			} else {
+				# Expressions were collected successfully, so the rule can be tested
 				$messages[$i] = $axiom -> {'test'}($statements -> [$i], @dep );
-			}
-			if (!$messages[$i]) {
-				$correct = $wasCorrect;
 			}
 		}
 	}
@@ -181,10 +200,14 @@ sub _check {
 	$summary = "Analyzed:";
 	if ($correct) {
 		$summary = "All justifications are valid.";
+	} else {
+		# (@messages are shown after $summary)
 	}
 	return (\@messages, $correct, $summary);
 }
 
+# "Normalize" reasons, which are entered as text, to make them
+# tolerant of capitalization and whitespace
 sub _normalize_reason {
 	my $str = shift;
 	if (!defined($str)) {
@@ -194,10 +217,16 @@ sub _normalize_reason {
 	return lc($str);
 }
 
+# Render this ProofChecker object as input boxes in a problem
 sub show {
 	my $self = shift;
+
 	# A proof is a sequence of statements and the justifications of those
 	# statements.
+
+	# Declare the usable logical deduction rules to the student
+	# (since the current interface requires students type the
+	# exact names, this is very necessary)
 	main::TEXT("You can use the following axioms/logical rules:" . $main::BR);
 	$axioms = $self -> {'axioms'};
 	foreach my $key (keys %$axioms) {
@@ -205,14 +234,16 @@ sub show {
 			main::TEXT($axioms -> {$key} -> {'name'} . " ($key)". $main::BR);
 		}
 	}
-	# Show answer blanks:
-	# [Show givens]
+
+	# Show givens lines
 	my $givens = $self -> {'givens'};
 	for (my $i = 0; $i < scalar @$givens; $i++) {
 		main::TEXT($i+1 . ".  " );
 		main::TEXT( "" . ($givens->[$i]) );
 		main::TEXT(" (given)" . $main::BR);
 	}
+
+	# Show answer blanks:
 	my $offset = scalar @$givens;
 	my @statementBlanks, @reasonBlanks, @dependsBlanks;
 	for (my $i = 0; $i < $self->{'num_blanks'}; $i++) {
@@ -227,6 +258,7 @@ sub show {
 		push @dependsBlanks, [$d1, $d2, $d3];
 		main::TEXT($main::BR);
 	}
+
 	# Create answer checking subroutine:
 	$evaluator = sub {
 		my $text = "";
@@ -234,12 +266,14 @@ sub show {
 		my @statements = ();
 		my %problems = (); # Which statements had problems
 		my @reasons = ();
+
 		# Add 'givens' from instructor
 		my $i = 0;
 		for ($i = 0; $i < scalar @$givens; $i++) {
 			push @statements, $givens -> [$i];
 			push @reasons, ['given'];
 		}
+
 		# Get a list of statements (as MathObjects)
 		foreach my $statementBlank (@statementBlanks) {
 			my $exp = $self -> _get_blank($statementBlank);
@@ -261,7 +295,8 @@ sub show {
 			$latex .= "\n";
 			$i++;
 		}
-		# Get a list of reasons;
+
+		# Validate the names of the justifications
 		for (my $i = 0; $i < scalar @reasonBlanks; $i++) {
 			$reason = _normalize_reason($self -> _get_blank($reasonBlanks[$i]));
 			if ($reason eq 'given') {
@@ -274,6 +309,8 @@ sub show {
 				int($self -> _get_blank($dependsBlanks[$i]->[2]) || 0),
 			];
 		}
+
+		# _check() this proof, and combine any problems/error-messages into the summary
 		my ($messages, $correct, $summary) = $self -> _check(\@statements, \@reasons);
 		for (my $i = 0; $i < $self -> {num_blanks}; $i++) {
 			my $p = $problems{$i + $offset} || $messages -> [$i + $offset];
@@ -281,6 +318,8 @@ sub show {
 				$summary .= $main::BR . ($i + $offset + 1) . '. ' . $p;
 			}
 		}
+
+		# Check that the correct thing was proved by the student
 		my $proved = 0;
 		for (my $i = 0; $i < $self -> {'num_blanks'}; $i++) {
 			if ( $self -> {'target'} -> Same($statements[$i]) ) {
@@ -290,21 +329,32 @@ sub show {
 		if (!$proved) {
 			$summary .= $main::BR . "You have not yet concluded " . ($self -> {'target'});
 		}
+
+		# construct a hash containing the results of checking this answer
+		# (used internally by WeBWorK)
 		my $x = new AnswerHash;
-			#a hash containing the results of checking this answer
+
+		# (shown as "Correct Answer" after homework closes)
+		# TODO: be able to provide this
 		$x -> {'correct_ans'} = ' ';
-			# (shown as "Correct Answer" after homework closes)
+
+		# what the student gave
+		# TODO: figure out what this is used for, and populate this
 		$x -> {'student_ans'} = ' ';
-			# what the student gave
+
+		# what the student gave, before any cleanup/fiddling
 		$x -> {'original_student_ans'} = ' ';
-			# what the student gave, before any cleanup/fiddling
+
+		# the string the student entered
 		$x -> {'ans_message'} = $summary;
-			# the string the student entered
+
 		$x -> {'preview_text_string'} = $text; # <-- ???
+
+		# the preview text shown in the table when checking/saving answers
 		$x -> {'preview_latex_string'} = $latex;
-			# the preview text shown in the table when checking/saving answers
+
+		# the score for the problem (0 is 0, 1 is 100%)
 		$x -> {'score'} = $correct && $proved;
-			# the score for the problem (0 is 0, 1 is 100%)
 		return $x;
 	};
 	# Record answer checker with WeBWorK:
