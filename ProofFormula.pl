@@ -40,6 +40,7 @@ would return a list of the variables in the private context.
 =cut
 
 loadMacros("MathObjects.pl");
+loadMacros("FunctionApplicationBOP.pl");
 
 sub _parserProofFormula_init {ProofFormula::Init()}
 
@@ -52,6 +53,12 @@ sub Init {
 
 Init();
 
+# Modify the text to insert implicit operators
+# (`$` as high-precedence function application)
+# This is necessary because of webwork's default choice
+# for juxtaposition is multiplication, not function application;
+# adding new functions prevents those functions' names being used
+# in non-function application ways.
 sub preprocess {
 	my $str = shift;
 	if (length($str) <= 1) {
@@ -91,8 +98,6 @@ sub new {
 	$context -> flags -> set(
 		'allowBadOperands' => 1,
 		'allowBadFunctionInputs' => 1,
-		'reduceConstants' => 0,
-		'reduceConstantFunctions' => 0,
 	);
 	# Allow pattern variables that start with '@'
 	my $oldpatterns = $context -> {'_variables'} {'patterns'};
@@ -100,12 +105,12 @@ sub new {
 	# Add function application operator:
 	$context -> operators -> add(
 		'$' => {
-			class => 'Parser::BOP::power',
-			precedence => 1000,       # very high?
-			associativity => 'left',  #  computed left to right
-			type => 'bin',            #  binary operator
-			string => '$',            #  output string for it
-			TeX => '',                #  TeX version
+			class => 'foo::BOP::FunctionApplication',
+			precedence => 1000,        # very high?
+			associativity => 'left',   #  computed left to right
+			type => 'bin',             #  binary operator
+			string => '$',             #  output string for it
+			TeX => 'not defined here', #  (overriden by class)
 		}
 	);
 	#

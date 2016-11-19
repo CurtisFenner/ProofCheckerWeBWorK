@@ -286,7 +286,7 @@ sub show {
 				} else {
 					#$f = Value::makeValue($exp, context=> main::Context());
 					$statements[$i] = $f;
-					$latex .= "\\text{ " . $f . " }"
+					$latex .= "{" . $f->TeX() . "}"
 				}
 			} else {
 				$problems{$i} = "";
