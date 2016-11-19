@@ -19,10 +19,11 @@ sub _eval {
 }
 
 #  Non-standard TeX output.
-# TODO: make f $ 5 be rendered as f(5).
+# TODO: correctly render (1 + 2)$(3 + 4)
+# TODO: fix that ->TeX() collapses constants
 sub TeX {
 	my $self = shift;
-	return '{'.$self->{lop}->TeX.' \choose '.$self->{rop}->TeX.'}';
+	return '{\operatorname{ '.$self->{lop}->TeX.' } \left({ '.$self->{rop}->TeX.' }\right) }';
 }
 
 #
