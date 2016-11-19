@@ -31,13 +31,16 @@ loadMacros('ProofFormula.pl');
 
 # https://github.com/openwebwork/pg/blob/master/macros/parserMultiAnswer.pl
 
-$obj = new ProofChecker('P( co(5) + 1 )');
+# 'P(co(5)+1)' is the statement that must be proven
+$proof = new ProofChecker('P( co(5) + 1 )');
 
-$obj -> given('forall(x, P(x+1) )');
+# Give a hypothesis of the proof that the student is given to be true
+$proof -> given('forall(x, P(x+1) )');
 
-$obj -> axiom({
+# Define an "axiom" (a justification for statements that appears in the drop-down)
+$proof -> axiom({
 	name => 'Universal Elimination',
-	depends => ["for all statement"], # the names of statements it depends on
+	depends => ["for all statement"], # give a student-visible name to the argument of this reason
 	test => sub {
 		my $line = shift;
 		my $forall = shift;
@@ -55,7 +58,7 @@ $obj -> axiom({
 	}
 });
 
-$obj -> show();
+$proof -> show();
 
 
 ENDDOCUMENT();
