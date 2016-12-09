@@ -55,8 +55,48 @@ $proof -> axiom({
 			return "not a valid instantiation of " . $forall;
 		}
 		return 0;
+	},
+	closes => 0
+});
+
+$proof -> axiom({
+	name => 'Universal Introduction',
+	depends => ["statement about 'free variable'"], # student visible
+	test => sub {
+		my $line = shift; # ex. line: forall(x, P(x))
+		my $freestatement = shift; # ex. freestatement: P(z)
+		my $scope_ref = shift;
+		my @scope = @$scope_ref;
+		#
+		my $forallPattern = ProofForumula('forall(@variable, @predicate)');
+		my $fam = $line -> Match($forallPattern);
+		if (!$fam) {
+			return "this line should be a forall() statement";
+		}
+		# ex. predicate: P(x). variable: x.
+		my $instancePattern = $fam -> {'predicate'} -> Replace( $fam -> {'variable'}, ProofFormula('@x') );
+		my $var = $freestatement -> Match($instancePattern);
+		if (!$var) {
+			return $freestatement . " cannot be generalized to " . $line;
+		}
+		# ex. var: z
+		# (ii) `var` doesn't appear in the for-all conclusion
+		if ($line -> Contains($var)) {
+			return $var . " should be eliminted from the generalization " . $line;
+		}
+		# (i) `var` doesn't occur in an accessible assumption
+		foreach my $assumption (@scope) {
+			if ($assumption -> {'assumption'}) {
+				if ($assumption -> Contains($var)) {
+					return $var . " is not a free variable since it was introduced in the assumption " . $assumption;
+				}
+			}
+		}
+		return 0;
 	}
 });
+
+
 
 $proof -> show();
 

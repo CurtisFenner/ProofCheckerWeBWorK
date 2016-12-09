@@ -280,6 +280,17 @@ sub Same {
 	my $other = shift;
 	return _same($self -> {'tree'}, $other -> {'tree'});
 }
+
+sub Contains {
+	my $self = shift;
+	my $needle = shift;
+
+	my $non = ProofFormula('@Q');
+
+	my $without = _substitute($self -> {'tree'}, $needle -> {'tree'}, $non -> {'tree'});
+	return !_same($without -> {'tree'}, $self -> {'tree'});
+}
+
 sub Match {
 	my $self = shift;
 	my $pattern = shift;

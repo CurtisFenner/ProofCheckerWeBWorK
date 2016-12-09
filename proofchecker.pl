@@ -52,6 +52,7 @@ sub new {
 				test => sub {
 					return 0;
 				},
+				assumption => 1, # this reason is an assumption. affects universal elimination
 			},
 		},
 		'target' => $target,
@@ -133,6 +134,35 @@ sub _in_scope {
 	return $line > $references && $references >= 1;
 }
 
+sub _collect_arguments {
+	my $row = shift; # row number (1 indexed -- for human)
+	my $reason = shift; # [<reason name>, <line 1>, <line 2>, ..., <line n>]
+	my $argumentNames = shift; #[<arg-1 name>, ..., <arg-n name>]
+	my $statements = shift;
+
+	my @dep = ();
+	for (my $j = 0; $j < scalar @$argumentNames; $j++) {
+		my $line = $reason->[$j+1];
+		my $name = $argumentNames->[$j];
+		if (!defined($line) || !$line) {
+			return {problem => $name . " didn't get a valid statement number"};
+		}
+		my $index = $line - 1;
+		if ($index < 0 || $index >= $row - 1) {
+			return {problem => $line . " is not in the valid range of statement numbers for row " . $row};
+		}
+		if (! $statements -> [$index] -> {'inScope'}) {
+			return {problem => "line $line is no longer in scope and can't be referenced from row $row"};
+		}
+		if (! defined($statements -> [$index])) {
+			return {problem => "statement $line is invalid; fix it first"};
+		}
+		push @dep, $statements -> [$index];
+	}
+
+	return {arguments => \@dep, problem => 0};
+}
+
 # Check the proof for validity. It returns information about what is wrong
 # Does NOT check that the proof is for what is needed.
 # my ($messages, $correct, $summary) = $pc -> _check($statements, $reasons);
@@ -162,38 +192,21 @@ sub _check {
 			# can refer to.
 			# This process can produce problem-messages
 			# (if the referred to statements are out of scope or malformed)
-			my @dep = ();
-			my $depNamesr = $axiom -> {'depends'};
-			my @depNames = @$depNamesr;
-			for (my $j = 1; $j <= scalar @depNames; $j++) {
-				# $k is the line number the student entered the justification refers to
-				my $k = $reasons->[$i]->[$j];
-				if (!defined($k) || !$k) {
-					# The line number isn't a valid line number
-					$messages[$i] = "'$k' is not a valid statement number (needed for " . $depNames[$j-1] . ")";
-				} else {
-					# The line number is a valid number, but it may not be inscope
-					if (!_in_scope($line, $k)) {
-						$messages[$i] = "statement $k is not in scope";
-					} else {
-						# The line may be in scope, but has an unreadable expression
-						# (e.g., due to a syntax error)
-						if (defined($statements -> [$k-1])) {
-							push @dep, $statements -> [$k-1];
-						} else {
-							$messages[$i] = "statement $k is malformed";
-						}
-					}
-				}
-			}
+			my $deps = _collect_arguments($line, $reasons->[$i], $axiom -> {'depends'}, $statements);
 
-			if ($messages[$i]) {
-				# An error was produced while collecting expressions
+			if ($deps -> {'problem'}) {
+				# An error was produced while collecting the arguments
 				$correct = 0;
+				$messages[$i] = $deps -> {'problem'};
 			} else {
 				# Expressions were collected successfully, so the rule can be tested
-				$messages[$i] = $axiom -> {'test'}($statements -> [$i], @dep );
+				$args = $deps -> {'arguments'};
+				$messages[$i] = $axiom -> {'test'}($statements -> [$i], @$args);
 			}
+
+			# TODO: make scopes that can be closed
+			$statements->[$i]->{'inScope'} = 1;
+			$statements->[$i]->{'assumption'} = $axiom -> {'assumption'};
 		}
 	}
 	#
