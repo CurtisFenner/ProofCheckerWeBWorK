@@ -277,7 +277,7 @@ sub show {
 	# Create answer checking subroutine:
 	$evaluator = sub {
 		my $text = "";
-		my $latex = "";
+		my $latex = '\begin{array}{r|l}';
 		my @statements = ();
 		my %problems = (); # Which statements had problems
 		my @reasons = ();
@@ -287,7 +287,12 @@ sub show {
 		for ($i = 0; $i < scalar @$givens; $i++) {
 			push @statements, $givens -> [$i];
 			push @reasons, ['given'];
+
+			my ($f, $err) = _parse( $givens -> [$i] );
+
+			$latex .= ($i+1) . " & " . " {" . $f->TeX() . "}" . " \\\\ \n";
 		}
+		$latex .= " \\hline \n";
 
 		# Get a list of statements (as MathObjects)
 		foreach my $statementBlank (@statementBlanks) {
@@ -301,15 +306,19 @@ sub show {
 				} else {
 					#$f = Value::makeValue($exp, context=> main::Context());
 					$statements[$i] = $f;
-					$latex .= "{" . $f->TeX() . "}"
+					# TODO: gather depth from proof
+					my $depth = $i % 3;
+					my $indent = " " . ("\\qquad" x (2*$depth)) . " ";
+					$latex .= ($i+1) . " & " . $indent . " {" . $f->TeX() . "}"
 				}
 			} else {
 				$problems{$i} = "";
 			}
 			$text .= "\n";
-			$latex .= "\n";
+			$latex .= " \\\\ \n";
 			$i++;
 		}
+		$latex .= '\end{array}' . "\n";
 
 		# Validate the names of the justifications
 		for (my $i = 0; $i < scalar @reasonBlanks; $i++) {
