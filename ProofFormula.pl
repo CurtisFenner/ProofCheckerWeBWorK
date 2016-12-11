@@ -285,10 +285,12 @@ sub Contains {
 	my $self = shift;
 	my $needle = shift;
 
-	my $non = ProofFormula('@Q');
+	my $without = $self -> Replace($needle, main::ProofFormula('@Q'));
 
-	my $without = _substitute($self -> {'tree'}, $needle -> {'tree'}, $non -> {'tree'});
-	return !_same($without -> {'tree'}, $self -> {'tree'});
+	if ($without -> Same($self)) {
+		return 0;
+	}
+	return "replace-and-got::" . $without->Tostr();
 }
 
 sub Match {

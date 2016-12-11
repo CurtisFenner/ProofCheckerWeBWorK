@@ -196,12 +196,14 @@ sub _check {
 
 			if ($deps -> {'problem'}) {
 				# An error was produced while collecting the arguments
-				$correct = 0;
 				$messages[$i] = $deps -> {'problem'};
 			} else {
 				# Expressions were collected successfully, so the rule can be tested
 				$args = $deps -> {'arguments'};
 				$messages[$i] = $axiom -> {'test'}($statements -> [$i], @$args);
+			}
+			if ($messages[$i]) {
+				$correct = 0;
 			}
 
 			# TODO: make scopes that can be closed

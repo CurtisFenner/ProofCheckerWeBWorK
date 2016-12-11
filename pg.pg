@@ -68,7 +68,7 @@ $proof -> axiom({
 		my $scope_ref = shift;
 		my @scope = @$scope_ref;
 		#
-		my $forallPattern = ProofForumula('forall(@variable, @predicate)');
+		my $forallPattern = ProofFormula('forall(@variable, @predicate)');
 		my $fam = $line -> Match($forallPattern);
 		if (!$fam) {
 			return "this line should be a forall() statement";
@@ -81,8 +81,9 @@ $proof -> axiom({
 		}
 		# ex. var: z
 		# (ii) `var` doesn't appear in the for-all conclusion
-		if ($line -> Contains($var)) {
-			return $var . " should be eliminted from the generalization " . $line;
+		my $cons = $line -> Contains($var->{'x'});
+		if ($cons) {
+			return $var->{'x'} . " should be eliminated from the generalization " . $line;
 		}
 		# (i) `var` doesn't occur in an accessible assumption
 		foreach my $assumption (@scope) {
