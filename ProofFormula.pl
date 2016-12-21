@@ -99,6 +99,8 @@ sub new {
 		'allowBadOperands' => 1,
 		'allowBadFunctionInputs' => 1,
 	);
+	$context -> reduction -> clear();
+	$context -> constants -> clear();
 	# Allow pattern variables that start with '@'
 	my $oldpatterns = $context -> {'_variables'} {'patterns'};
 	$context -> {'_variables'}{'patterns'} = {qr/@?[a-zA-Z][a-zA-Z0-9]*/i	=> [5, 'var']};
@@ -120,6 +122,7 @@ sub new {
 			TeX => 'not defined here', #  (overriden by class)
 		}
 	);
+	$context -> operators -> remove(' ');
 	#
 	#	Create a formula from the user's input.
 	#
