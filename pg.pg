@@ -46,7 +46,26 @@ $proof -> axiom({
 		}
 		return 0;
 	},
-	closes => 0
+});
+
+$proof -> axiom({
+	name => 'Existential Introduction',
+	depends => ['statement'],
+	test => sub {
+		my $line = shift; # exists(x, P(x))
+		my $stat = shift; # P(c)
+		#
+		my $existsPattern = ProofFormula('exists(@variable, @predicate)');
+		my $em = $line -> Match($existsPattern);
+		if (!$em) {
+			return "not a there-exists statement";
+		}
+		my $instantiationPattern = $em -> {'predicate'} -> Replace($em -> {'variable'}, ProofFormula('@v'));
+		if (! $stat->Match($instantiationPattern) ) {
+			return $stat . " cannot be generalized as " . $line;
+		}
+		return 0;
+	},
 });
 
 $proof -> axiom({
