@@ -23,7 +23,43 @@ sub _eval {
 # TODO: fix that ->TeX() collapses constants
 sub TeX {
 	my $self = shift;
-	return '{\operatorname{ '.$self->{lop}->TeX.' } \left({ '.$self->{rop}->TeX.' }\right) }';
+	my $right = $self->{rop}->TeX;
+	$right =~ s/\\\\//g;
+	$right =~ s/\\left//g;
+	$right =~ s/\\right//g;
+
+	# if the right side has balanced parenthesis, don't add more
+
+	my $first = substr($right, 0, 1);
+	my $last = substr($right, -1);
+	my $middle = substr($right, 1, -1);
+
+	my $omit = 1;
+
+	my $level = 0;
+	for my $c (split //, $middle) {
+		if ($c eq '(') {
+			$level++;
+		} elsif ($c eq ')') {
+			$level--;
+			if ($level < 0) {
+				$omit = 0;
+			}
+		}
+	}
+	if ($level != 0) {
+		$omit = 0;
+	}
+	if (($first ne '(') || ($last ne ')')) {
+		$omit = 0;
+	}
+
+	warn "printing: omit:$omit for `$right`";
+	if ($omit) {
+		return '{\operatorname{ '.$self->{lop}->TeX.' } { ' . $right . ' } }';
+	}
+
+	return '{\operatorname{ '.$self->{lop}->TeX.' } \left({ ' . $right . ' }\right) }';
 }
 
 #
