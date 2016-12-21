@@ -98,3 +98,6 @@ ANS( checker2 ); # define checker for first blank
 
 # Look at fraction context for something that tears up the operators
 
+
+# Important place in source:
+# https://github.com/openwebwork/pg/tree/82d00b0f68e33d32b9c5f2bb4216a00be23dd99d/lib/Parser
