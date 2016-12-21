@@ -54,6 +54,11 @@ sub new {
 				},
 				assumption => 1, # this reason is an assumption. affects universal elimination
 			},
+			'conclude' => {
+				name => 'Conclude',
+				conclusion => 1,
+				depends => [],
+			},
 		},
 		'target' => $target,
 		'givens' => [],
@@ -172,6 +177,8 @@ sub _check {
 	my $reasons = shift;
 	my $correct = 1;
 	#
+	my @opens = ();
+	my @openData = ();
 	my @messages = ();
 	for (my $i = 0; $i < $self->{num_blanks}; $i++) {
 		# The human-readable line numbering begins at 1 instead of 0
@@ -200,7 +207,52 @@ sub _check {
 			} else {
 				# Expressions were collected successfully, so the rule can be tested
 				$args = $deps -> {'arguments'};
-				$messages[$i] = $axiom -> {'test'}($statements -> [$i], @$args);
+
+				my @inScope;
+				for (my $j = 0; $j < $i; $j++) {
+					if (defined($statements -> [$j]) && $statements -> [$j] -> {'inScope'}) {
+						push @inScope, $statements -> [$j];
+					}
+				}
+				# Check using the axiom (conclusion | supposition | normal)
+				if ($axiom -> {'conclusion'}) {
+					# special: conclusion of sub-proof
+					if (scalar @openData == 0) {
+						$messages[$i] = "cannot conclude anything; no sub-proof is open";
+					} else {
+						my $last = pop @openData;
+						if ($last == 0) {
+							$messages[$i] = "(cannot check conclusion because sub-proof was opened incorrectly)";
+						} else {
+							$messages[$i] = $last -> {'opener'} -> {'close'}($statements -> [$i], $last, \@inScope);
+						}
+
+						# close the open sub-proof
+						my $until = pop @opens;
+						for (my $j = $until; $j < $i; $j++) {
+							if (defined($statements -> [$j])) {
+								$statements->[$j]->{'inScope'} = 0;
+							}
+						}
+					}
+				} elsif ($axiom -> {'open'}) {
+					# sub-proof axiom
+					push @opens, $i;
+					my $result = $axiom -> {'open'}($statements -> [$i], @$args, \@inScope);
+					if (ref($result)) {
+						# successful! save result for reference by conclusion
+						$messages[$i] = 0;
+						$result -> {'opener'} = $axiom;
+						push @openData, $result;
+					} else {
+						# failure (error message)
+						$messages[$i] = $result;
+						push @openData, 0;
+					}
+				} else {
+					# regular axiom
+					$messages[$i] = $axiom -> {'test'}($statements -> [$i], @$args, \@inScope);
+				}
 			}
 			if ($messages[$i]) {
 				$correct = 0;
@@ -208,12 +260,15 @@ sub _check {
 
 			# TODO: make scopes that can be closed
 			$statements->[$i]->{'inScope'} = 1;
-			$statements->[$i]->{'assumption'} = $axiom -> {'assumption'};
+			$statements->[$i]->{'assumption'} = $axiom -> {'open'} || $axiom -> {'assumption'};
 		}
 	}
 	#
 	$summary = "Analyzed:";
-	if ($correct) {
+	if (scalar @opens) {
+		my $lastOpen = $opens[scalar @opens - 1] + 1;
+		$summary = "Did not close a sub-proof opened on line " . $lastOpen . ";";
+	} elsif ($correct) {
 		$summary = "All justifications are valid.";
 	} else {
 		# (@messages are shown after $summary)
