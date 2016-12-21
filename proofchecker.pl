@@ -191,7 +191,11 @@ sub _check {
 			$axiom = $self -> {'axioms'} -> {$reasons->[$i][0]};
 			if (!defined($axiom)) {
 				$correct = 0;
-				$messages[$i] = "no such rule '" . $reasons->[$i][0] . "'.";
+				if ($reasons->[$i][0]) {
+					$messages[$i] = "no such rule '" . $reasons->[$i][0] . "'.";
+				} else {
+					$messages[$i] = "must specify a reason";
+				}
 				next;
 			}
 
