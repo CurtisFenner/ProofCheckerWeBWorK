@@ -232,11 +232,15 @@ sub _match {
 			return $matches;
 		}
 	} elsif (defined($pattern -> {'coords'})) {
-		if (!defined($self -> {'coords'})) {
+		my @selfs;
+		if (defined($self -> {'coords'})) {
+			@selfs = @{$self -> {'coords'}};
+		} elsif (ref($self->{'value'}) eq "HASH" && ref($self->{'value'}->{'data'}) eq "ARRAY") {
+			@selfs = @{$self -> {'value'} -> {'data'}};
+		} else {
 			return undef;
 		}
-		@patterns = @{$pattern -> {'coords'}};
-		@selfs = @{$self -> {'coords'}};
+		my @patterns = @{$pattern -> {'coords'}};
 		if (scalar @patterns != scalar @selfs) {
 			return undef;
 		}
