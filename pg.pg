@@ -78,7 +78,7 @@ $proof -> axiom({
 		# (i) `var` doesn't occur in an accessible assumption
 		foreach my $assumption (@scope) {
 			if ($assumption -> {'assumption'}) {
-				if ($assumption -> Contains($var)) {
+				if ($assumption -> Contains($var->{'x'})) {
 					return $var . " is not a free variable since it was introduced in the assumption " . $assumption;
 				}
 			}
@@ -87,7 +87,68 @@ $proof -> axiom({
 	}
 });
 
+$proof -> axiom({
+	name => 'Existential Elimination',
+	depends => ["there-exists statement"],
+	open => sub {
+		# 1) instantiation variable `a` must not appear in any in-scope assumption
+		# 2) instantiation variable `a` must not appear in there-exists statement
+		my $line = shift; # e.g., P(c)
+		my $thereExists = shift; # e.g., exists(x, P(x))
+		my $scope_ref = shift;
+		my @scope = @$scope_ref;
 
+		my $existsPattern = ProofFormula('exists(@variable, @predicate)');
+		my $em = $thereExists -> Match($existsPattern);
+		if (!$em) {
+			return "this line should be a there-exists statement";
+		}
+
+		my $predicatePattern = $em->{'predicate'} -> Replace($em->{'variable'}, ProofFormula('@v'));
+		my $var = $line -> Match($predicatePattern);
+		if (!$var) {
+			return $line . " is not an instantiation of " . $thereExists;
+		}
+
+		if (!($var -> {'v'} -> {'tree'} -> {'name'})) {
+			return "you must instantiate to a name, not a complex expression like " . $var -> {'v'};
+		}
+		if ($thereExists -> Contains($var -> {'v'})) {
+			return "the instantiated name " . $var->{'v'} . " must not appear in " . $thereExists;
+		}
+
+		foreach my $assumption (@scope) {
+			if ($assumption -> {'assumption'}) {
+				if ($assumption -> Contains($var->{'v'})) {
+					return "You cannot use the name " . $var . " because it is used in assumption " . $assumption;
+				}
+			}
+		}
+
+		# appears OK
+		return {
+			'var' => $var -> {'v'}
+		};
+	},
+	close => sub {
+		# 3) conclusion must not contain instantiation variable `a`
+		# (it should have been abstracted into a there-exists)
+		my $line = shift; # e.g., exists(s, Q(s))
+		my $opening = shift;
+		my $scope_ref = shift;
+		my @scope = @$scope_ref;
+
+		if ($line -> Contains($opening -> {'var'})) {
+			return "Conclusion must not use variable " . $opening->{'var'};
+		}
+
+		my $top = $scope[(scalar @scope) - 1];
+		if (!($top -> Same($line))) {
+			return "Conclusion must match previous line";
+		}
+		return 0;
+	},
+});
 
 $proof -> show();
 
