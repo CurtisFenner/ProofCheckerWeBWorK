@@ -327,11 +327,11 @@ sub show {
 	main::TEXT('Using the provided statements and deduction rules, prove that \(' . $self->{'target'}->TeX() . '\).' . $main::BR);
 	main::TEXT("You can use the following axioms/logical rules:<ul>");
 	$axioms = $self -> {'axioms'};
+	my $alpha = "ABCDEFG";
 	foreach my $key (keys %$axioms) {
 		if ($key ne 'given') {
 			main::TEXT("<li>" . $axioms -> {$key} -> {'name'});
 			my @dep = @{$axioms -> {$key} -> {'depends'}};
-			my $alpha = "ABCDEFG";
 			if (scalar @dep > $cols) {
 				$cols = scalar @dep;
 			}
@@ -346,31 +346,49 @@ sub show {
 	}
 	main::TEXT("</ul>\n\n");
 
+	# Output the proof table
+	main::TEXT("<table>");
+	main::TEXT("<tr>");
+	main::TEXT("<th>#</th> <th>Statement</th> <th></th> <th>Justification</th><th></th>");
+	for (my $c = 0; $c < $cols; $c++) {
+		main::TEXT("<th>" . substr($alpha, $c, 1) . "</th>");
+	}
+	main::TEXT("</tr>");
+
 	# Show givens lines
 	my $givens = $self -> {'givens'};
 	for (my $i = 0; $i < scalar @$givens; $i++) {
-		main::TEXT($i+1 . ".  " );
-		main::TEXT('\(' . $givens->[$i]->TeX() .'\)');
-		main::TEXT(" (given)" . $main::BR);
+		main::TEXT('<tr><th>' . ($i+1) . '.</th>');
+		main::TEXT('<td>\(' . $givens->[$i]->TeX() .'\)</td>');
+		main::TEXT('<td></td><td>given</td><td></td><td colspan=' . $cols . '></td>');
+		main::TEXT('</tr>');
 	}
 
 	# Show answer blanks:
 	my $offset = scalar @$givens;
 	my @statementBlanks, @reasonBlanks, @dependsBlanks;
 	for (my $i = 0; $i < $self->{'num_blanks'}; $i++) {
-		main::TEXT($i+1+$offset . ". ");
+		main::TEXT('<tr><th>' . ($i+1+$offset) . '.</th>');
+		main::TEXT('<td>');
 		push @statementBlanks, $self->_show_blank(20);
-		main::TEXT(" by ");
+		main::TEXT('</td>');
+		main::TEXT('<td>by</td>');
+		main::TEXT('<td>');
 		push @reasonBlanks, $self->_show_blank(20);
-		main::TEXT(" on ");
+		main::TEXT('</td>');
+		main::TEXT('<td>on</td>');
 		my @blanks = ();
 		for (my $c = 0; $c < $cols; $c++) {
+			main::TEXT('<td>');
 			my $blank = $self -> _show_blank(1);
+			main::TEXT('</td>');
 			push @blanks, $blank;
 		}
 		push @dependsBlanks, \@blanks;
-		main::TEXT($main::BR);
+		main::TEXT('</tr>');
 	}
+
+	main::TEXT('</table>');
 
 	# Create answer checking subroutine:
 	$evaluator = sub {
