@@ -108,7 +108,7 @@ sub given {
 
 	my ($statement, $err) = _parse($exp);
 	if (!defined($statement)) {
-		main::TEXT("GIVEN ERROR: $err");
+		warn("ProofChecker -> given('$exp') caused parse error: $err");
 	}
 	my $givens = $self -> {'givens'};
 	push @$givens, $statement;
