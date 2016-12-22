@@ -436,7 +436,7 @@ sub show {
 	for (my $i = 0; $i < $self->{'num_blanks'}; $i++) {
 		main::TEXT('<tr><th>' . ($i+1+$offset) . '.</th>');
 		main::TEXT('<td>');
-		push @statementBlanks, $self->_show_blank(20);
+		push @statementBlanks, $self->_show_blank(30);
 		main::TEXT('</td>');
 		main::TEXT('<td>by</td>');
 		main::TEXT('<td>');

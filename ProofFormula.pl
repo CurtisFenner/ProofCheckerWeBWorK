@@ -128,7 +128,7 @@ sub new {
 	$context -> operators -> add(
 		'&' => {
 			class => 'foo::BOP::And',
-			precedence => -1,
+			precedence => 0.5,
 			associativity => 'left',
 			type => 'bin',
 			string => '&',
