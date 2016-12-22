@@ -1,3 +1,12 @@
+{
+	package foo::BOP::And;
+	our @ISA = ('Parser::BOP');
+
+	# unused by proof
+	sub _check {return 0;}
+	sub _eval {return 0;}
+	sub perl {return "<<<unused>>>";}
+}
 #
 #  A package for representing function application syntactically
 #

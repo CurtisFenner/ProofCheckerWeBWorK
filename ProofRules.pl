@@ -125,7 +125,7 @@ our %ProofRules = (
 ########################################################################################################################
 	"universal_elimination" => {
 		name => 'Universal Elimination',
-		depends => ["for all statement"], # give a student-visible name to the argument of this reason
+		depends => ["for-all statement"], # give a student-visible name to the argument of this reason
 		test => sub {
 			my $line = shift;
 			my $forall = shift;
@@ -141,7 +141,49 @@ our %ProofRules = (
 			}
 			return 0;
 		},
-	}
+	},
+########################################################################################################################
+	"conjunction_elimination" => {
+		name => 'Conjunction Elimination',
+		depends => ["and-statement"],
+		test => sub {
+			my $line = shift;
+			my $and = shift;
+			#
+			my $andPattern = main::ProofFormula('@a & @b');
+			my $am = $and -> Match($andPattern);
+			if (!$am) {
+				return "`" . $and . "` should be a statement of the form `a & b`";
+			}
+			if ($line -> Same($am -> {'a'}) || $line -> Same($am -> {'b'})) {
+				return 0;
+			}
+			return "You can only conclude `" . $am->{'a'} . "` or `" . $am->{'b'} . "` using conjunction elimination on `" . $and . "`.";
+		}
+	},
+########################################################################################################################
+	"conjunction_introduction" => {
+		name => 'Conjunction Introduction',
+		depends => ["first statement", "second statement"],
+		test => sub {
+			my $line = shift;
+			my $s1 = shift;
+			my $s2 = shift;
+			#
+			my $andPattern = main::ProofFormula('@a & @b');
+			my $am = $line -> Match($andPattern);
+			if (!$am) {
+				return "`" . $line . "` should be a statement of the form `a & b`";
+			}
+			if ($s1 -> Same($am -> {'a'}) || $s2 -> Same($am -> {'b'})) {
+				return 0;
+			}
+			if ($s2 -> Same($am -> {'a'}) || $s1 -> Same($am -> {'b'})) {
+				return 0;
+			}
+			return "You can only conclude the conjunction of `" . $s1 . "` and `" . $s2 . "` using conjunction introduction.";
+		}
+	},
 );
 
 return 1;

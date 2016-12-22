@@ -538,7 +538,7 @@ sub show {
 			}
 		}
 		if (!$proved) {
-			$summary .= $main::BR . "You have not yet concluded " . ($self -> {'target'});
+			$summary .= $main::BR . "You have not yet concluded " . '\(' . ($self -> {'target'})->TeX() . '\)';
 		}
 
 		# construct a hash containing the results of checking this answer

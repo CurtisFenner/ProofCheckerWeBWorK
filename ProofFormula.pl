@@ -123,6 +123,19 @@ sub new {
 		}
 	);
 	$context -> operators -> remove(' ');
+
+	# Add `and` and `or` operators
+	$context -> operators -> add(
+		'&' => {
+			class => 'foo::BOP::And',
+			precedence => -1,
+			associativity => 'left',
+			type => 'bin',
+			string => '&',
+			TeX => ' \mathop{\&} ',
+		}
+	);
+
 	#
 	#	Create a formula from the user's input.
 	#
