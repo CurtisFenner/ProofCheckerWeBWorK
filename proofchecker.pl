@@ -199,22 +199,37 @@ sub _collect_arguments {
 	for (my $j = 0; $j < scalar @$argumentNames; $j++) {
 		my $line = $reason->[$j+1];
 		my $name = $argumentNames->[$j];
+
+		my @thoseInScope = ();
+		for (my $k = 0; $k < scalar @$statements; $k++) {
+			if (defined($statements->[$k]) && $statements->[$k] -> {'inScope'}) {
+				push @thoseInScope, $k+1;
+			}
+		}
+		my $thoseInScope = "No statements";
+		if (scalar @thoseInScope > 1) {
+			my $last = pop @thoseInScope;
+			$thoseInScope = "Statements " . join(', ', @thoseInScope) . " and $last";
+		} elsif (scalar @thoseInScope == 1) {
+			$thoseInScope = "Statement " . $thoseInScope[0];
+		}
+
 		if (!defined($line) || !$line) {
 			return {
 				problem =>
 				"You left column " . substr($ALPHA, $j, 1) . " blank. "
-				. "You need to specify which line number of the " . $name . " that you're referring to."
+				. "You need to specify which line number of the " . $name . " that you're referring to. $thoseInScope are in scope at this point."
 			};
 		}
 		my $index = $line - 1;
 		if ($index < 0 || $index >= $row - 1) {
-			return {problem => $line . " is not in the valid range of statement numbers for row " . $row};
+			return {problem => $line . " is not in the scope of line " . $row . ". $thoseInScope are in scope at this point."};
 		}
 		if (! $statements -> [$index] -> {'inScope'}) {
-			return {problem => "line $line is no longer in scope and can't be referenced from row $row"};
+			return {problem => "line $line is no longer in scope and can't be referenced from row $row. $thoseInScope are in scope at this point."};
 		}
 		if (! defined($statements -> [$index])) {
-			return {problem => "statement $line is invalid; fix it first"};
+			return {problem => "statement $line is invalid; fix it before referring to it."};
 		}
 		push @dep, $statements -> [$index];
 	}
@@ -337,7 +352,7 @@ sub _check {
 	$summary = "Analyzed:";
 	if (scalar @opens) {
 		my $lastOpen = $opens[scalar @opens - 1] + 1;
-		$summary = "Did not close a sub-proof opened on line " . $lastOpen . ";";
+		$summary = "You didn't close the sub-proof that was opened on line " . $lastOpen . ";";
 	} elsif ($correct) {
 		$summary = "All justifications are valid.";
 	} else {
