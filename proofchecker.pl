@@ -158,14 +158,6 @@ sub _get_blank {
 	return $inputs -> {$name};
 }
 
-# TODO: make this work with subproofs
-sub _in_scope {
-	my $line = shift;
-	my $references = shift;
-	# my $proof = shift;
-	return $line > $references && $references >= 1;
-}
-
 sub _collect_arguments {
 	my $row = shift; # row number (1 indexed -- for human)
 	my $reason = shift; # [<reason name>, <line 1>, <line 2>, ..., <line n>]
