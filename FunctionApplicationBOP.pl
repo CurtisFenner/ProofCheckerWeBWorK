@@ -54,7 +54,6 @@ sub TeX {
 		$omit = 0;
 	}
 
-	warn "printing: omit:$omit for `$right`";
 	if ($omit) {
 		return '{\operatorname{ '.$self->{lop}->TeX.' } { ' . $right . ' } }';
 	}
