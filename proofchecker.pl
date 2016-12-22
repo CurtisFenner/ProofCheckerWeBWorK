@@ -72,6 +72,28 @@ sub new {
 sub axiom {
 	my $self = shift;
 	my $rule = shift;
+
+	# Argument validation
+	if (ref($rule) ne "HASH") {
+		warn("`ProofChecker -> axiom(rule)` expects `rule` to be a hash-reference");
+	}
+	if (!defined($rule -> {'name'})) {
+		warn('rule -> {name} should be a string');
+	}
+	if (ref($rule -> {'depends'}) ne 'ARRAY') {
+		warn('rule -> {depends} should be an array-reference');
+	}
+	my $hasOpen = ref($rule -> {'open'}) eq 'CODE';
+	my $hasClose = ref($rule -> {'close'}) eq 'CODE';
+	my $hasTest = ref($rule -> {'test'}) eq 'CODE';
+	if ($hasTest && $hasOpen || $hasTest && $hasClose) {
+		warn("rule should specify a `test` OR a `open`+`close` subroutine(s), not both");
+	} elsif ($hasTest) {
+	} elsif ($hasOpen && $hasClose) {
+	} else {
+		warn("rule " . $rule->{name} . " must specify a `test` or a `open`+`close` subroutine(s)");
+	}
+
 	$self -> {'axioms'} -> {_normalize_reason($rule -> {'name'})} = $rule;
 }
 
@@ -79,6 +101,11 @@ sub axiom {
 sub given {
 	my $self = shift;
 	my $exp = shift;
+
+	if (ref($exp)) {
+		warn("`ProofChecker->given(expr)` expects `expr` to be a string, not a reference");
+	}
+
 	my ($statement, $err) = _parse($exp);
 	if (!defined($statement)) {
 		main::TEXT("GIVEN ERROR: $err");
