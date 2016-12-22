@@ -359,6 +359,7 @@ sub _check {
 	if (scalar @opens) {
 		my $lastOpen = $opens[scalar @opens - 1] + 1;
 		$summary = "You didn't close the sub-proof that was opened on line " . $lastOpen . ";";
+		$correct = 0;
 	} elsif ($correct) {
 		$summary = "All justifications are valid.";
 	} else {
@@ -489,11 +490,14 @@ sub show {
 			$i++;
 		}
 
+		my $cheating = 0;
+
 		# Validate the names of the justifications
 		for (my $i = 0; $i < scalar @reasonBlanks; $i++) {
 			my $reason = _normalize_reason($self -> _get_blank($reasonBlanks[$i]));
 			if ($reason eq 'given') {
-				$problems{$i + $offset} = "student cannot use 'given' as justification"
+				$problems{$i + $offset} = "student cannot use 'given' as justification";
+				$cheating = 1;
 			}
 			my @just = ($reason);
 			for (my $c = 0; $c < $cols; $c++) {
@@ -533,7 +537,7 @@ sub show {
 		# Check that the correct thing was proved by the student
 		my $proved = 0;
 		for (my $i = 0; $i < $self -> {'num_blanks'}; $i++) {
-			if ( $self -> {'target'} -> Same($statements[$i]) ) {
+			if ( $self -> {'target'} -> Same($statements[$i]) && $statements[$i]->{'inScope'} ) {
 				$proved = 1;
 			}
 		}
@@ -565,7 +569,7 @@ sub show {
 		$x -> {'preview_latex_string'} = $latex;
 
 		# the score for the problem (0 is 0, 1 is 100%)
-		$x -> {'score'} = $correct && $proved;
+		$x -> {'score'} = $correct && $proved && !$cheating;
 		return $x;
 	};
 	# Record answer checker with WeBWorK:
