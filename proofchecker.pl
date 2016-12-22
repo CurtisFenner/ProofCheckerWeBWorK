@@ -323,19 +323,35 @@ sub _normalize_reason {
 sub show {
 	my $self = shift;
 
+	# The number of argument columns to output
+	my $cols = 0;
+
 	# A proof is a sequence of statements and the justifications of those
 	# statements.
 
 	# Declare the usable logical deduction rules to the student
 	# (since the current interface requires students type the
 	# exact names, this is very necessary)
-	main::TEXT("You can use the following axioms/logical rules:" . $main::BR);
+	main::TEXT("You can use the following axioms/logical rules:<ul>");
 	$axioms = $self -> {'axioms'};
 	foreach my $key (keys %$axioms) {
 		if ($key ne 'given') {
-			main::TEXT($axioms -> {$key} -> {'name'} . " ($key)". $main::BR);
+			main::TEXT("<li>" . $axioms -> {$key} -> {'name'});
+			my @dep = @{$axioms -> {$key} -> {'depends'}};
+			my $alpha = "ABCDEFG";
+			if (scalar @dep > $cols) {
+				$cols = scalar @dep;
+			}
+			if (scalar @dep) {
+				for (my $i = 0; $i < scalar @dep; $i++) {
+					$dep[$i] = substr($alpha, $i, 1) . ": " . $dep[$i];
+				}
+				main::TEXT("(" . join(", ", @dep) . ")");
+			}
+			main::TEXT("</li>\n");
 		}
 	}
+	main::TEXT("</ul>\n\n");
 
 	# Show givens lines
 	my $givens = $self -> {'givens'};
@@ -354,10 +370,12 @@ sub show {
 		main::TEXT(" by ");
 		push @reasonBlanks, $self->_show_blank(20);
 		main::TEXT(" on ");
-		my $d1 = $self -> _show_blank(1);
-		my $d2 = $self -> _show_blank(1);
-		my $d3 = $self -> _show_blank(1);
-		push @dependsBlanks, [$d1, $d2, $d3];
+		my @blanks = ();
+		for (my $c = 0; $c < $cols; $c++) {
+			my $blank = $self -> _show_blank(1);
+			push @blanks, $blank;
+		}
+		push @dependsBlanks, \@blanks;
 		main::TEXT($main::BR);
 	}
 
@@ -396,16 +414,15 @@ sub show {
 
 		# Validate the names of the justifications
 		for (my $i = 0; $i < scalar @reasonBlanks; $i++) {
-			$reason = _normalize_reason($self -> _get_blank($reasonBlanks[$i]));
+			my $reason = _normalize_reason($self -> _get_blank($reasonBlanks[$i]));
 			if ($reason eq 'given') {
 				$problems{$i + $offset} = "student cannot use 'given' as justification"
 			}
-			push @reasons, [
-				$reason,
-				int($self -> _get_blank($dependsBlanks[$i]->[0]) || 0),
-				int($self -> _get_blank($dependsBlanks[$i]->[1]) || 0),
-				int($self -> _get_blank($dependsBlanks[$i]->[2]) || 0),
-			];
+			my @just = ($reason);
+			for (my $c = 0; $c < $cols; $c++) {
+				push @just, int($self -> _get_blank($dependsBlanks[$i]->[$c]) || 0);
+			}
+			push @reasons, \@just;
 		}
 
 		# _check() this proof, and combine any problems/error-messages into the summary
