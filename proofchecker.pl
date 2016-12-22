@@ -357,7 +357,7 @@ sub show {
 	my $givens = $self -> {'givens'};
 	for (my $i = 0; $i < scalar @$givens; $i++) {
 		main::TEXT($i+1 . ".  " );
-		main::TEXT( "" . ($givens->[$i]) );
+		main::TEXT('\(' . $givens->[$i]->TeX() .'\)');
 		main::TEXT(" (given)" . $main::BR);
 	}
 
