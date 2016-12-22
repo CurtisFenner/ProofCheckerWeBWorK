@@ -66,6 +66,12 @@ sub _string_similarity {
 sub new {
 	my $self = shift;
 	my $targetStr = shift;
+
+	my $numBlanks = shift; #optional
+	if (!defined($numBlanks)) {
+		$numBlanks = 8;
+	}
+
 	my $class = ref($self) || $self; # ??
 	my ($target, $err) = _parse($targetStr);
 	if (!defined($target)) {
@@ -73,7 +79,7 @@ sub new {
 	}
 	return bless {
 		'_blank_num' => 0,
-		'num_blanks' => 5,
+		'num_blanks' => $numBlanks,
 		'axioms' => {
 			'given' => { # a special rule that students can't use
 				name => 'Given',
