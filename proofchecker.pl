@@ -40,7 +40,7 @@ sub new {
 	my $class = ref($self) || $self; # ??
 	my ($target, $err) = _parse($targetStr);
 	if (!defined($target)) {
-		main::TEXT("TARGET ERROR: $err");
+		warn("new ProofChecker: when parsing `$targetStr`, got parse error: $err");
 	}
 	return bless {
 		'_blank_num' => 0,
@@ -332,6 +332,7 @@ sub show {
 	# Declare the usable logical deduction rules to the student
 	# (since the current interface requires students type the
 	# exact names, this is very necessary)
+	main::TEXT('Using the provided statements and deduction rules, prove that \(' . $self->{'target'}->TeX() . '\).' . $main::BR);
 	main::TEXT("You can use the following axioms/logical rules:<ul>");
 	$axioms = $self -> {'axioms'};
 	foreach my $key (keys %$axioms) {
