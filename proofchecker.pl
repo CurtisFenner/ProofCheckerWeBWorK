@@ -33,6 +33,35 @@ our $counter = 0;
 	ProofChecker('target statement as string');
 =cut
 
+# computes a similarity (between 0 and 1) of two strings
+sub _string_similarity {
+	my $a = shift;
+	my $b = shift;
+
+	my %M = ();
+	for (my $i = 0; $i <= length($a); $i++) {
+		for (my $j = 0; $j <= length($b); $j++) {
+			my $k = $i . "," . $j;
+			if ($i == 0 || $j == 0) {
+				$M{$k} = 0;
+			} else {
+				if (substr($a, $i-1, 1) eq substr($b, $j-1, 1)) {
+					$M{$k} = 1 + $M{($i-1) . "," . ($j-1)};
+				} else {
+					my $u = $M{($i-1) . "," . $j};
+					my $v = $M{$i . "," . ($j-1)};
+					if ($u < $v) {
+						$M{$k} = $v;
+					} else {
+						$M{$k} = $u;
+					}
+				}
+			}
+		}
+	}
+	return $M{length($a) . "," . length($b)} * 2 / (length($a) + length($b));
+}
+
 # Define a constructor for this class
 sub new {
 	my $self = shift;
@@ -158,6 +187,8 @@ sub _get_blank {
 	return $inputs -> {$name};
 }
 
+my $ALPHA = "ABCDEFG";
+
 sub _collect_arguments {
 	my $row = shift; # row number (1 indexed -- for human)
 	my $reason = shift; # [<reason name>, <line 1>, <line 2>, ..., <line n>]
@@ -169,7 +200,11 @@ sub _collect_arguments {
 		my $line = $reason->[$j+1];
 		my $name = $argumentNames->[$j];
 		if (!defined($line) || !$line) {
-			return {problem => $name . " didn't get a valid statement number"};
+			return {
+				problem =>
+				"You left column " . substr($ALPHA, $j, 1) . " blank. "
+				. "You need to specify which line number of the " . $name . " that you're referring to."
+			};
 		}
 		my $index = $line - 1;
 		if ($index < 0 || $index >= $row - 1) {
@@ -211,9 +246,20 @@ sub _check {
 			if (!defined($axiom)) {
 				$correct = 0;
 				if ($reasons->[$i][0]) {
-					$messages[$i] = "no such rule '" . $reasons->[$i][0] . "'.";
+					my $got = $reasons->[$i][0];
+					my $best = "";
+					foreach my $key (keys(%{$self->{axioms}})) {
+						if (_string_similarity($key, $got) > _string_similarity($key, $best)) {
+							$best = $key;
+						}
+					}
+					# Output message indicating invalid rule
+					$messages[$i] = "There isn't a logical rule called '" . $got  . "' available in this problem.";
+					if ($best) {
+						$messages[$i] .= " Did you mean '" . $self->{'axioms'}->{$best}->{'name'} . "'?";
+					}
 				} else {
-					$messages[$i] = "must specify a reason";
+					$messages[$i] = "The justfication for line $line is blank. Write a justification.";
 				}
 				next;
 			}
@@ -241,7 +287,7 @@ sub _check {
 				if ($axiom -> {'conclusion'}) {
 					# special: conclusion of sub-proof
 					if (scalar @openData == 0) {
-						$messages[$i] = "cannot conclude anything; no sub-proof is open";
+						$messages[$i] = "You cannot conclude anything here; no sub-proof is open at line $line";
 					} else {
 						my $last = pop @openData;
 						if ($last == 0) {
@@ -327,7 +373,6 @@ sub show {
 	main::TEXT('Using the provided statements and deduction rules, prove that \(' . $self->{'target'}->TeX() . '\).' . $main::BR);
 	main::TEXT("You can use the following axioms/logical rules:<ul>");
 	$axioms = $self -> {'axioms'};
-	my $alpha = "ABCDEFG";
 	foreach my $key (keys %$axioms) {
 		if ($key ne 'given') {
 			main::TEXT("<li>" . $axioms -> {$key} -> {'name'});
@@ -337,7 +382,7 @@ sub show {
 			}
 			if (scalar @dep) {
 				for (my $i = 0; $i < scalar @dep; $i++) {
-					$dep[$i] = substr($alpha, $i, 1) . ": " . $dep[$i];
+					$dep[$i] = substr($ALPHA, $i, 1) . ": " . $dep[$i];
 				}
 				main::TEXT("(" . join(", ", @dep) . ")");
 			}
@@ -351,7 +396,7 @@ sub show {
 	main::TEXT("<tr>");
 	main::TEXT("<th>#</th> <th>Statement</th> <th></th> <th>Justification</th><th></th>");
 	for (my $c = 0; $c < $cols; $c++) {
-		main::TEXT("<th>" . substr($alpha, $c, 1) . "</th>");
+		main::TEXT("<th>" . substr($ALPHA, $c, 1) . "</th>");
 	}
 	main::TEXT("</tr>");
 
