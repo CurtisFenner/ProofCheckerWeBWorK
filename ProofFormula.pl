@@ -124,6 +124,18 @@ sub new {
 	);
 	$context -> operators -> remove(' ');
 
+	# Add implication operator
+	$context -> operators -> add(
+		'=>' => {
+			class => 'foo::BOP::Implies',
+			precedence => 0.1,
+			associativity => 'right',
+			type => 'bin',
+			string => ' => ',
+			TeX => ' \implies ',
+		}
+	);
+
 	# Add `and` and `or` operators
 	$context -> operators -> add(
 		'&' => {

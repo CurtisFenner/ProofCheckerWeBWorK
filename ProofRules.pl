@@ -153,12 +153,12 @@ our %ProofRules = (
 			my $andPattern = main::ProofFormula('@a & @b');
 			my $am = $and -> Match($andPattern);
 			if (!$am) {
-				return "`" . $and . "` should be a statement of the form `a & b`";
+				return '\(' . $and->TeX() . '\) should be a statement of the form \(a & b\)';
 			}
 			if ($line -> Same($am -> {'a'}) || $line -> Same($am -> {'b'})) {
 				return 0;
 			}
-			return "You can only conclude `" . $am->{'a'} . "` or `" . $am->{'b'} . "` using conjunction elimination on `" . $and . "`.";
+			return 'You can only conclude \(' . $am->{'a'}->TeX() . '\) or \(' . $am->{'b'}->TeX() . '\) using conjunction elimination on \(' . $and->TeX() . '\)';
 		}
 	},
 ########################################################################################################################
@@ -173,7 +173,7 @@ our %ProofRules = (
 			my $andPattern = main::ProofFormula('@a & @b');
 			my $am = $line -> Match($andPattern);
 			if (!$am) {
-				return "`" . $line . "` should be a statement of the form `a & b`";
+				return '\(' . $line . '\) should be a statement of the form \(a & b\)';
 			}
 			if ($s1 -> Same($am -> {'a'}) || $s2 -> Same($am -> {'b'})) {
 				return 0;
@@ -181,7 +181,30 @@ our %ProofRules = (
 			if ($s2 -> Same($am -> {'a'}) || $s1 -> Same($am -> {'b'})) {
 				return 0;
 			}
-			return "You can only conclude the conjunction of `" . $s1 . "` and `" . $s2 . "` using conjunction introduction.";
+			return 'You can only conclude the conjunction of \(' . $s1 . '\) and \(' . $s2 . '\) using conjunction introduction.';
+		}
+	},
+########################################################################################################################
+	"modus_ponens" => {
+		name => 'Modus Ponens',
+		depends => ["P => Q statement", "P statement"],
+		test => sub {
+			my $line = shift;
+			my $pimpliesq = shift;
+			my $p = shift;
+			#
+			my $implicationPattern = main::ProofFormula('@p => @q');
+			my $im = $pimpliesq -> Match($implicationPattern);
+			if (!$im) {
+				return 'The first argument of modus-ponens should be an implication, but \(' . $pimpliesq->TeX() . '\) was used.';
+			}
+			if (!$im->{'p'}->Same($p)) {
+				return '\(' . $p->TeX() . '\) should match the left side of \(' . $pimpliesq->TeX() . '\)';
+			}
+			if (!$im->{'q'}->Same($line)) {
+				return 'The conclusion \(' . $line->TeX() . '\) should match the right side of \(' . $pimpliesq->TeX() . '\)';
+			}
+			return 0;
 		}
 	},
 );
