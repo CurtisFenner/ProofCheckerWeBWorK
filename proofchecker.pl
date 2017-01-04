@@ -311,7 +311,10 @@ sub _check {
 						$messages[$i] = "You cannot conclude anything here; no sub-proof is open at line $line";
 					} else {
 						my $last = pop @openData;
-						if ($last == 0) {
+						if (!ref($last)) {
+							if ($last != 0) {
+								warn("the only non-ref that should be returned from successful open is 0");
+							}
 							$messages[$i] = "(cannot check conclusion because sub-proof was opened incorrectly)";
 						} else {
 							$messages[$i] = $last -> {'opener'} -> {'close'}($statements -> [$i], $last, \@inScope);

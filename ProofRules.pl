@@ -185,6 +185,37 @@ our %ProofRules = (
 		}
 	},
 ########################################################################################################################
+	"implication_introduction" => {
+		name => 'Implication Introduction',
+		depends => [],
+		open => sub {
+			my $line = shift;
+
+			return $line;
+		},
+		close => sub {
+			my $line = shift;
+			my $supposition = shift;
+			my $scope_ref = shift;
+			my @scope = @$scope_ref;
+
+			my $top = $scope[(scalar @scope) - 1];
+			my $pattern = main::ProofFormula('@a => @b');
+			my $m = $line -> Match($pattern);
+			# Validate return
+			if (!$m) {
+				return 'You can only conclude implications from implication-introduction';
+			}
+			if (!$m->{'a'}->Same($supposition)) {
+				return 'You can only conclude implications of the form \(' . $supposition->TeX() . ' \) => here using implication introduction.';
+			}
+			if (!$m->{'b'}->Same($top)) {
+				return 'Your implication should use the previous statement to condlue \(' . $supposition->TeX() . ' => ' . $top . '\) here.';
+			}
+			return 0;
+		},
+	},
+########################################################################################################################
 	"modus_ponens" => {
 		name => 'Modus Ponens',
 		depends => ["P => Q statement", "P statement"],
