@@ -539,7 +539,7 @@ sub show {
 
 		# Check that the correct thing was proved by the student
 		my $proved = 0;
-		for (my $i = 0; $i < $self -> {'num_blanks'}; $i++) {
+		for (my $i = 0; $i < $self -> scalar @statements; $i++) {
 			if ( $self -> {'target'} -> Same($statements[$i]) && $statements[$i]->{'inScope'} ) {
 				$proved = 1;
 			}
