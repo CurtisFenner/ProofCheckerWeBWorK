@@ -136,6 +136,17 @@ sub new {
 		}
 	);
 
+	# Add `=` operator
+	$context -> operators -> add(
+		'=' => {
+			class => 'foo::BOP::Eq',
+			precedence => 0.75,
+			type => 'bin',
+			string => '=',
+			TeX => ' = ',
+		}
+	);
+
 	# Add `and` and `or` operators
 	$context -> operators -> add(
 		'&' => {
