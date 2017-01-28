@@ -1,3 +1,5 @@
+package proofparsing;
+
 # RETURNS a reference to an array of strings
 # RETURNS undef, string error message upon failure
 sub _tokenize {
@@ -30,9 +32,18 @@ sub _tokenize {
 		$str = substr($str, length($token), );
 	}
 
-	print("tokenization: [" . join(", ", @tokens) . "]\n");
 	return \@tokens, undef;
 }
+
+my %precedence = (
+	'$' => 9999999999,
+	'-u' => 100,
+	'^' => 5,
+	'*' => 4,
+	'/' => 4,
+	'+' => 2,
+	'-' => 2,
+);
 
 sub shunting {
 	my $str = shift;
@@ -42,15 +53,6 @@ sub shunting {
 		return undef, $err;
 	}
 
-	my %precedence = (
-		'$' => 9999999999,
-		'-u' => 100,
-		'^' => 5,
-		'*' => 4,
-		'/' => 4,
-		'+' => 2,
-		'-' => 2,
-	);
 	my %right = (
 		'-u' => 1,
 		'^' => 1,
@@ -60,7 +62,6 @@ sub shunting {
 	my @tokens = ();
 	my $previous = "(";
 	foreach my $token (@$rawtokens) {
-		print("preprocessing $token\n");
 		if ($token eq '(' && !exists($precedence{$previous}) && $previous ne '(') {
 			push @tokens, '$';
 			push @tokens, '(';
@@ -72,14 +73,10 @@ sub shunting {
 		$previous = $token;
 	}
 
-	print("annotated tokens: [" . join(", ", @tokens) . "]\n");
-
 	# Do shunting-yard parsing
 	my @stack = ();
 	my @outQueue = ();
 	foreach my $token (@tokens) {
-		print("processing `$token`\n");
-
 		if ($token eq '(') {
 			push @stack, '(1';
 			next;
@@ -172,9 +169,93 @@ sub shunting {
 		push @outQueue, $top;
 	}
 
-	print("\noutQueue size is " . scalar @outQueue . "\n");
 	return \@outQueue, undef;
 }
 
-my ($out, $err) = shunting("cos  (1 + 2)");
-print("output: " . join ",", @$out);
+sub parseRPN {
+	my $actions_ref = shift;
+	my @actions = @$actions_ref;
+
+	if (scalar @actions < 1) {
+		return undef, "nothing was provided";
+	}
+
+	my @stack = ();
+	foreach $action (@actions) {
+		if (substr($action, 0, 1) eq '$') {
+			if ($action eq '$') {
+				# Function call
+				if (scalar @stack < 2) {
+					return undef, "misplaced function";
+				}
+				my $arg = pop @stack;
+				my $fun = pop @stack;
+				push @stack, \{'type' => 'function', 'function' => $fun, 'arguments' => $arg};
+			} else {
+				# Tuple
+				my $count = substr($action, 1);
+				if (scalar @stack < $count) {
+					return undef, "misplaced tuple/comma";
+				}
+
+				my %args = ('type' => 'tuple', 'count' => $count);
+				for (my $i = 0; $i < $count; $i++) {
+					$args{$i} = pop @stack;
+				}
+				push @stack, \%args;
+			}
+		} elsif (exists($precedence{$action})) {
+			if (substr($action, 0, 1) eq 'u') {
+				# Unary operator
+				if (scalar @stack < 1) {
+					return undef, "misplaced operator '" . substr($action, 1) . "'";
+				}
+				my $arg = pop @stack;
+				push @stack, \{'type' => 'unary', 'argument' => $arg, 'op' => substr($action, 1)};
+			} else {
+				# Binary operator
+				if (scalar @stack < 2) {
+					return undef, "misplaced operator '$action'";
+				}
+				my $right = pop @stack;
+				my $left = pop @stack;
+				push @stack, \{'type' => 'binary', 'left' => $left, 'right' => $right, 'op' => $action};
+			}
+		} else {
+			# Atom (constant / variable / hole)
+			if (substr($action, 0, 1) eq '@') {
+				# Pattern variable
+				push @stack, \{'type' => 'pattern', 'name' => substr($action, 1)};
+			} else {
+				push @stack, \{'type' => 'constant', 'value' => $action};
+			}
+		}
+	}
+	if (scalar @stack > 1) {
+		return undef, "unexpected value '" . $stack[1] . "'";
+	}
+	return $stack[0], undef;
+}
+
+# An Expression has a {type}
+#     type => pattern: has a {name} which is a string
+#     type => constant: has a {value} which is a string
+#     type => binary: has a {left} and {right} which are expression refs.
+#                     has a {op} which is a string
+#     type => unary: has a {argument} which is an expression ref.
+#                    has a {op} which is a string
+#     type => tuple: has a {count} which is an integer.
+#                   has a {0}, {1}, ..., {count-1} which are expression refs.
+#     type => function: has a {function} which is an expression ref
+#                           (probably a pattern or constant).
+#                       has a {arguments} which is an expression ref
+#                           (probably a tuple)
+# Takes a string as an argument
+# RETURNS <expression ref>, <error string>
+sub parse {
+	my ($tokens, $err) = shunting(shift);
+	if (!defined($tokens)) {
+		return undef, $err;
+	}
+	return parseRPN($tokens);
+}
