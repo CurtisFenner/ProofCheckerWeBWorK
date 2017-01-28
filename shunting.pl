@@ -182,7 +182,9 @@ sub parseRPN {
 
 	my @stack = ();
 	foreach $action (@actions) {
-		if (substr($action, 0, 1) eq '$') {
+		if ($action eq '$1') {
+			# parenthesis around an expression; ignore
+		} elsif (substr($action, 0, 1) eq '$') {
 			if ($action eq '$') {
 				# Function call
 				if (scalar @stack < 2) {
@@ -200,7 +202,7 @@ sub parseRPN {
 
 				my %args = ('type' => 'tuple', 'count' => $count);
 				for (my $i = 0; $i < $count; $i++) {
-					$args{$i} = pop @stack;
+					$args{$count-1-$i} = pop @stack;
 				}
 				push @stack, \%args;
 			}
@@ -244,12 +246,12 @@ sub parseRPN {
 #                     has a {op} which is a string
 #     type => unary: has a {argument} which is an expression ref.
 #                    has a {op} which is a string
-#     type => tuple: has a {count} which is an integer.
+#     type => tuple: has a {count} which is an integer 2 or greater.
 #                   has a {0}, {1}, ..., {count-1} which are expression refs.
 #     type => function: has a {function} which is an expression ref
 #                           (probably a pattern or constant).
 #                       has a {arguments} which is an expression ref
-#                           (probably a tuple)
+#                           (a tuple for multi-argument functions)
 # Takes a string as an argument
 # RETURNS <expression ref>, <error string>
 sub parse {
@@ -259,3 +261,6 @@ sub parse {
 	}
 	return parseRPN($tokens);
 }
+
+# use Data::Dumper;
+# print( Dumper(parse("cos(5 + 1, 3)") ) );
