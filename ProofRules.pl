@@ -1,5 +1,14 @@
 package ProofRules;
 
+sub E {
+	my $str = shift;
+	my ($obj, $err) = main::ProofFormula::MAKE($str);
+	if (!defined($obj)) {
+		warn("invalid expression '$str' passed to `E` in ProofRules; parse error '$err'");
+	}
+	return $obj;
+}
+
 our %ProofRules = (
 ########################################################################################################################
 	"universal_introduction" => {
@@ -11,13 +20,13 @@ our %ProofRules = (
 			my $scope_ref = shift;
 			my @scope = @$scope_ref;
 			#
-			my $forallPattern = main::ProofFormula('forall(@variable, @predicate)');
+			my $forallPattern = E('forall(@variable, @predicate)');
 			my $fam = $line -> Match($forallPattern);
 			if (!$fam) {
 				return "this line should be a forall() statement";
 			}
 			# ex. predicate: P(x). variable: x.
-			my $instancePattern = $fam -> {'predicate'} -> Replace( $fam -> {'variable'}, main::ProofFormula('@x') );
+			my $instancePattern = $fam -> {'predicate'} -> Replace( $fam -> {'variable'}, E('@x') );
 			my $var = $freestatement -> Match($instancePattern);
 			if (!$var) {
 				return $freestatement . " cannot be generalized to " . $line;
@@ -51,13 +60,13 @@ our %ProofRules = (
 			my $scope_ref = shift;
 			my @scope = @$scope_ref;
 
-			my $existsPattern = main::ProofFormula('exists(@variable, @predicate)');
+			my $existsPattern = E('exists(@variable, @predicate)');
 			my $em = $thereExists -> Match($existsPattern);
 			if (!$em) {
 				return "this line should be a there-exists statement";
 			}
 
-			my $predicatePattern = $em->{'predicate'} -> Replace($em->{'variable'}, main::ProofFormula('@v'));
+			my $predicatePattern = $em->{'predicate'} -> Replace($em->{'variable'}, E('@v'));
 			my $var = $line -> Match($predicatePattern);
 			if (!$var) {
 				return $line . " is not an instantiation of " . $thereExists;
@@ -110,12 +119,12 @@ our %ProofRules = (
 			my $line = shift; # exists(x, P(x))
 			my $stat = shift; # P(c)
 			#
-			my $existsPattern = main::ProofFormula('exists(@variable, @predicate)');
+			my $existsPattern = E('exists(@variable, @predicate)');
 			my $em = $line -> Match($existsPattern);
 			if (!$em) {
 				return "`" . $line->TeX() . "` must be a there-exists statement to be the conclusion of existential-introduction.";
 			}
-			my $instantiationPattern = $em -> {'predicate'} -> Replace($em -> {'variable'}, main::ProofFormula('@v'));
+			my $instantiationPattern = $em -> {'predicate'} -> Replace($em -> {'variable'}, E('@v'));
 			if (! $stat->Match($instantiationPattern) ) {
 				return $stat . " cannot be generalized as " . $line;
 			}
@@ -130,12 +139,12 @@ our %ProofRules = (
 			my $line = shift;
 			my $forall = shift;
 			#
-			my $forallPattern = main::ProofFormula('forall(@variable, @predicate)');
+			my $forallPattern = E('forall(@variable, @predicate)');
 			my $fam = $forall -> Match($forallPattern);
 			if (!$fam) {
-				return "not a forall statement";
+				return $forall->Tostr() . " isn't a for-all statement; the 'A' column should indicate a for-all statement";
 			}
-			my $instancePattern = $fam -> {'predicate'} -> Replace( $fam -> {'variable'}, main::ProofFormula('@x') );
+			my $instancePattern = $fam -> {'predicate'} -> Replace( $fam -> {'variable'}, E('@x') );
 			if (! $line -> Match($instancePattern)) {
 				return "not a valid instantiation of " . $forall;
 			}
@@ -150,7 +159,7 @@ our %ProofRules = (
 			my $line = shift;
 			my $and = shift;
 			#
-			my $andPattern = main::ProofFormula('@a & @b');
+			my $andPattern = E('@a & @b');
 			my $am = $and -> Match($andPattern);
 			if (!$am) {
 				return '\(' . $and->TeX() . '\) should be a statement of the form \(a & b\)';
@@ -170,7 +179,7 @@ our %ProofRules = (
 			my $s1 = shift;
 			my $s2 = shift;
 			#
-			my $andPattern = main::ProofFormula('@a & @b');
+			my $andPattern = E('@a & @b');
 			my $am = $line -> Match($andPattern);
 			if (!$am) {
 				return '\(' . $line . '\) should be a statement of the form \(a & b\)';
@@ -200,7 +209,7 @@ our %ProofRules = (
 			my @scope = @$scope_ref;
 
 			my $top = $scope[(scalar @scope) - 1];
-			my $pattern = main::ProofFormula('@a => @b');
+			my $pattern = E('@a => @b');
 			my $m = $line -> Match($pattern);
 			# Validate return
 			if (!$m) {
@@ -224,7 +233,7 @@ our %ProofRules = (
 			my $pimpliesq = shift;
 			my $p = shift;
 			#
-			my $implicationPattern = main::ProofFormula('@p => @q');
+			my $implicationPattern = E('@p => @q');
 			my $im = $pimpliesq -> Match($implicationPattern);
 			if (!$im) {
 				return 'The first argument of modus-ponens should be an implication, but \(' . $pimpliesq->TeX() . '\) was used.';

@@ -156,7 +156,7 @@ sub _parse {
 	if (index($str, "'") >= 0 || index($str, "\\") >= 0) {
 		return (undef, "cannot contain single quote or backslash");
 	}
-	my ($obj, $err) = main::PG_restricted_eval("ProofFormula('$str')");
+	my ($obj, $err) = ProofFormula::MAKE($str);
 	return ($obj, $err);
 }
 
@@ -539,8 +539,8 @@ sub show {
 
 		# Check that the correct thing was proved by the student
 		my $proved = 0;
-		for (my $i = 0; $i < $self -> scalar @statements; $i++) {
-			if ( $self -> {'target'} -> Same($statements[$i]) && $statements[$i]->{'inScope'} ) {
+		for (my $i = 0; $i < scalar @statements; $i++) {
+			if ($statements[$i]->{'inScope'} && $self -> {'target'} -> Same($statements[$i])) {
 				$proved = 1;
 			}
 		}

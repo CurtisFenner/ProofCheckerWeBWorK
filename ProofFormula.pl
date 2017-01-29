@@ -41,175 +41,86 @@ would return a list of the variables in the private context.
 
 loadMacros("MathObjects.pl");
 loadMacros("FunctionApplicationBOP.pl");
+loadMacros("shunting.pl");
 
 sub _parserProofFormula_init {ProofFormula::Init()}
 
 package ProofFormula;
-@ISA = ('Value::Formula');
 
 sub Init {
-	main::PG_restricted_eval('sub ProofFormula {ProofFormula->new(@_)}');
 }
 
 Init();
 
-# Modify the text to insert implicit operators
-# (`$` as high-precedence function application)
-# This is necessary because of webwork's default choice
-# for juxtaposition is multiplication, not function application;
-# adding new functions prevents those functions' names being used
-# in non-function application ways.
-sub preprocess {
-	my $str = shift;
-	if (length($str) <= 1) {
-		return $str;
-	}
-	my $out = substr($str, 0, 1);
-	my $prev = $out;
-	for (my $i = 1; $i < length($str); $i++) {
-		my $c = substr($str, $i, 1);
-		if (lc($prev) ne uc($prev)) {
-			if ($c eq '(') {
-				$out = $out . '$';
-			}
-		}
-		$out = $out . $c;
-		if ($c =~ /^\s*$/) {} else {
-			$prev = $c;
-		}
-	}
-	return $out;
+sub TeX {
+	# TODO
+	return "foo";
 }
 
-#
-#	Create an instance of a ProofFormula.	If no constant
-#	is supplied, we add C ourselves.
-#
-sub new {
-	my $self = shift; my $class = ref($self) || $self;
-	#
-	#	Copy the context (so we can modify it) and
-	#	replace the usual Variable object with our own.
-	#
-	my $context = (Value::isContext($_[0]) ? shift : $self->context)->copy;
-	# Suppress most of the error checking done by the built-in context / parser:
-	$context->{'parser'}{'Variable'} = 'ProofFormula::Variable';
-	# $context->{'parser'}{'Function'} = 'ProofFormula::Function';
-	$context -> flags -> set(
-		'allowBadOperands' => 1,
-		'allowBadFunctionInputs' => 1,
-	);
-	$context -> reduction -> clear();
-	$context -> constants -> clear();
+# Create an instance of a ProofFormula.
+sub MAKE {
+	# TODO:
 	# Allow pattern variables that start with '@'
-	my $oldpatterns = $context -> {'_variables'} {'patterns'};
-	$context -> {'_variables'}{'patterns'} = {qr/@?[a-zA-Z][a-zA-Z0-9]*/i	=> [5, 'var']};
-
-	# Remove all functions from this context (they interfere with parsing; use preprocess to insert $)
-	$fs = $context->functions;
-	$tokens = $fs->{'tokens'};
-	foreach $f (keys %$tokens) {
-		$context->functions->remove($f);
-	}
-	# Add function application operator:
-	$context -> operators -> add(
-		'$' => {
-			class => 'foo::BOP::FunctionApplication',
-			precedence => 1000,        # very high?
-			associativity => 'left',   #  computed left to right
-			type => 'bin',             #  binary operator
-			string => '$',             #  output string for it
-			TeX => 'not defined here', #  (overriden by class)
-		}
-	);
-	$context -> operators -> remove(' ');
-
 	# Add implication operator
-	$context -> operators -> add(
-		'=>' => {
-			class => 'foo::BOP::Implies',
-			precedence => 0.1,
-			associativity => 'right',
-			type => 'bin',
-			string => ' => ',
-			TeX => ' \implies ',
-		}
-	);
-
 	# Add `=` operator
-	$context -> operators -> add(
-		'=' => {
-			class => 'foo::BOP::Eq',
-			precedence => 0.75,
-			type => 'bin',
-			string => '=',
-			TeX => ' = ',
-		}
-	);
-
 	# Add `and` and `or` operators
-	$context -> operators -> add(
-		'&' => {
-			class => 'foo::BOP::And',
-			precedence => 0.5,
-			associativity => 'left',
-			type => 'bin',
-			string => '&',
-			TeX => ' \mathop{\&} ',
-		}
-	);
 
-	#
 	#	Create a formula from the user's input.
-	#
-	my @arg = @_;
-	$arg[0] = preprocess($arg[0]);
-	my $f = main::Formula($context, @arg);
-	#
-	#	Make a version with adaptive parameters for use in the
-	#	comparison later on.	We would like n00*C, but already have $n
-	#	copies of C, so remove them.	That way, n00 will be 0 when there
-	#	are no C's in the student answer during the adaptive comparison.
-	#	(Again, should really check that n00 is not in use already)
-	#
-	$f->{adapt} = $f;
-	return bless $f, $class;
+	my $str = shift;
+	my ($e, $err) = proofparsing::parse($str);
+
+	if (!defined($e)) {
+		return undef, $err;
+	}
+
+	return (bless {'tree' => $e}, 'ProofFormula'), undef;
 }
 
 ################################################################################
 
+# returns whether or not two expression trees are equivalent
 sub _same {
-	my $self = shift;
+	my $tree = shift;
 	my $other = shift;
-	return defined(_match($self, $other, {}));
+	defined(_match($tree, $other, {}));
 }
 
+# makes a proof formula equivalent to this
 sub _form {
 	my $tree = shift;
 	return main::ProofFormula(_tostr($tree));
 }
 
+# makes a string from an expression tree
 sub _tostr {
-	my $self = shift;
-	if ($self -> {'name'}) {
-		if ($self -> {'hole'}) {
-			return '@' . $self->{'name'};
+	my $tree = shift;
+	my $type = $tree->{'type'};
+
+	if ($type eq 'pattern') {
+		return '@' . $tree->{'name'};
+	} elsif ($type eq 'constant') {
+		return $tree->{'value'};
+	} elsif ($type eq 'binary') {
+		return '(' . _tostr($tree->{'left'}) . ' ' . $tree->{'op'} . ' ' . _tostr($tree->{'right'}) . ')';
+	} elsif ($type eq 'unary') {
+		return '(' . $tree->{'op'} . ' ' . _tostr($tree->{'argument'}) . ')';
+	} elsif ($type eq 'tuple') {
+		my $out = '(';
+		for (my $i = 0; $i < $tree->{'count'}; $i++) {
+			if ($i > 0) {
+				$out .= ', ';
+			}
+			$out .= _tostr($tree->{$i});
 		}
-		return $self -> {'name'};
-	} elsif ($self -> {'bop'}) {
-		return '(' . _tostr($self -> {'lop'}) . ' ' . $self -> {'bop'} . ' ' . _tostr($self -> {'rop'}) . ')';
-	} elsif ($self -> {'isConstant'}) {
-		return $self -> {'value_string'};
-	} elsif (defined($self -> {'coords'})) {
-		my @elements = @{$self -> {'coords'}};
-		for (my $i = 0; $i < scalar @elements; $i++) {
-			$elements[$i] = _tostr($elements[$i]);
-		}
-		return "(" . join(", ", @elements) . ")";
-	} else {
-		main::TEXT( "_tostr couldn't handle:" . main::pretty_print($self) );
-		return "UNKNOWN";
+		return $out . ')';
+	} elsif ($type eq 'function') {
+		# Careful: I assume the {function} is unparenthesized,
+		# because that's currently an assumption of the parser
+		return _tostr($tree->{'function'}) . '(' . _tostr($tree->{'arguments'}) . ')';
 	}
+
+	warn("unrecognized expression type '$type'");
+	return "";
 }
 
 sub Tostr {
@@ -218,102 +129,112 @@ sub Tostr {
 }
 
 sub _substitute {
-	my $self = shift;
+	my $tree = shift;
 	my $needle = shift;
 	my $replacement = shift;
-	if (_same($self, $needle)) {
+	if (_same($tree, $needle)) {
 		return $replacement;
 	}
-	if ($self -> {'name'} || $self -> {'isConstant'}) {
-		return $self;
-	} elsif ($self -> {'bop'}) {
+
+	my $type = $tree->{'type'};
+
+	if ($type eq 'pattern' || $type eq 'constant') {
+		return $tree;
+	} elsif ($type eq 'binary') {
 		return {
-			'bop' => $self -> {'bop'},
-			'lop' => _substitute($self -> {'lop'}, $needle, $replacement),
-			'rop' => _substitute($self -> {'rop'}, $needle, $replacement),
+			'type' => 'binary',
+			'op' => $tree->{'op'},
+			'left' => _substitute($tree->{'left'}, $needle, $replacement),
+			'right' => _substitute($tree->{'right'}, $needle, $replacement),
 		};
-	} elsif (defined($self -> {'coords'})) {
-		my @elements = @{$self -> {'coords'}};
-		for (my $i = 0; $i < scalar @elements; $i++) {
-			$elements[$i] = _substitute($elements[$i], $needle, $replacement);
+	} elsif ($type eq 'unary') {
+		return {
+			'type' => 'unary',
+			'op' => $tree->{'op'},
+			'argument' => _substitute($tree->{'argument'}, $needle, $replacement),
+		};
+	} elsif ($type eq 'tuple') {
+		my %elements = ('type'=>'tuple', 'count' => $tree->{'count'});
+		for (my $i = 0; $i < $tree->{'count'}; $i++) {
+		 	$elements[$i] = _substitute($tree->{'coords'}->{$i}, $needle, $replacement);
 		}
+		return \%elements;
+	} elsif ($type eq 'function') {
 		return {
-			'coords' => \@elements,
+			'type' => 'function',
+			'function' => _substitute($tree->{'function'}, $needle, $replacement),
+			'arguments' => _substitute($tree->{'arguments'}, $needle, $replacement),
 		};
-	} else {
-		main::TEXT( main::pretty_print($self) );
-		return undef;
 	}
+
+	warn("unrecognized expression type $type");
+	return undef;
 }
 
 sub _match {
-	my $self = shift; # a ProofFormula
-	my $pattern = shift; # a ProofFormula
+	my $self = shift; # a ProofFormula tree
+	my $pattern = shift; # a ProofFormula tree
 	my $matches = shift;
 	#
-	#main::TEXT("<hr>");
-	#main::TEXT( ($self) . " VERSUS " . ($pattern) );
-	#main::TEXT("<hr>");
-	#
-	if (defined($pattern -> {'hole'})) {
-		# match against just a variable
-		my $var = $pattern -> {'hole'};
-		if ($matches -> {$var}) {
-			my $old = $matches -> {$var};
-			my $same = _same($self, $old);
-			if ($same) {
+	if (ref($pattern) ne 'HASH') {
+		warn("pattern $pattern is not a hash / ref(pattern) is `" . ref($pattern) . "`");
+		return undef;
+	}
+	if (!exists($self->{'type'})) {
+		warn("self `$self` doesn't have a 'type'");
+		return undef;
+	}
+	if (!exists($pattern->{'type'})) {
+		warn("pattern `$pattern` doesn't have a 'type'");
+		return undef;
+	}
+
+	if ($pattern->{'type'} eq 'pattern') {
+		# match against just a pattern-matching-variable
+		my $var = $pattern->{'name'};
+		if (defined($matches->{$var})) {
+			# verify that this object is the same as previous matches
+			my $old = $matches->{$var};
+			if (_same($self, $old)) {
 				return $matches;
 			} else {
-				return undef; # second time found, did not match
+				return undef;
 			}
 		} else {
-			$matches -> {$var} = $self;
+			# new way to match
+			$matches->{$var} = $self;
 			return $matches;
 		}
-	} elsif (defined($pattern -> {'coords'})) {
-		my @selfs;
-		if (defined($self -> {'coords'})) {
-			@selfs = @{$self -> {'coords'}};
-		} elsif (ref($self->{'value'}) eq "HASH" && ref($self->{'value'}->{'data'}) eq "ARRAY") {
-			@selfs = @{$self -> {'value'} -> {'data'}};
-		} else {
+	} elsif ($pattern->{'type'} eq 'tuple') {
+		if ($self->{'type'} ne 'tuple') {
+			# pattern is a tuple but this expression is not
 			return undef;
 		}
-		my @patterns = @{$pattern -> {'coords'}};
-		if (scalar @patterns != scalar @selfs) {
+		if ($self->{'count'} != $pattern->{'count'}) {
+			# patter and this have different sizes
 			return undef;
 		}
-		for (my $i = 0; $i < scalar @selfs; $i++) {
-			$matches = $matches && _match($selfs[$i], $patterns[$i], $matches);
+		for (my $i = 0; $i < $self->{'count'}; $i++) {
+			$matches = $matches && _match($self->{$i}, $pattern->{$i}, $matches);
 		}
 		return $matches;
-	} elsif (defined($pattern -> {'bop'})) {
-		if (!defined($self -> {'bop'})) {
+	} elsif ($pattern->{'type'} eq 'binary') {
+		if ($self->{'type'} ne 'binary') {
 			return undef;
 		}
-		if ($self -> {'bop'} ne $pattern -> {'bop'}) {
+		if ($self->{'op'} ne $pattern->{'op'}) {
 			return undef;
 		}
-		return _match($self -> {'lop'}, $pattern -> {'lop'}, $matches)
-			&& _match($self -> {'rop'}, $pattern -> {'rop'}, $matches);
-	} elsif ($pattern -> {'isConstant'}) {
-		if ($self -> {'isConstant'} && $self -> {'value'} eq $pattern -> {'value'}) {
+		return _match($self->{'left'}, $pattern->{'left'}, $matches)
+			&& _match($self->{'right'}, $pattern->{'right'}, $matches);
+	} elsif ($pattern->{'type'} eq 'constant') {
+		if (_same($self, $pattern)) {
 			return $matches;
-		} else {
-			return undef;
 		}
-	} elsif (defined($pattern -> {'name'})) {
-		if (!defined($self -> {'name'})) {
-			return undef;
-		}
-		if ($self -> {'name'} eq $pattern -> {'name'}) {
-			return $matches;
-		} else {
-			return undef;
-		}
-	} else {
-		main::TEXT($main::BR . main::pretty_print($pattern) . $main::BR)
+		return undef;
 	}
+
+	main::TEXT(main::pretty_print($pattern));
 	return undef;
 }
 
@@ -321,7 +242,14 @@ sub _match {
 sub Same {
 	my $self = shift;
 	my $other = shift;
-	return _same($self -> {'tree'}, $other -> {'tree'});
+	if (ref($other) ne 'ProofFormula') {
+		return warn("Same($other) is called with non-ProofFormula parameter;"
+			. " instead was passed " . ref($other));
+	}
+
+	my $result = _same($self -> {'tree'}, $other -> {'tree'});
+
+	return $result;
 }
 
 sub Contains {
@@ -339,6 +267,11 @@ sub Contains {
 sub Match {
 	my $self = shift;
 	my $pattern = shift;
+	if (!defined($self->{'tree'})) {
+		return warn("->Match called on a ProofFormula without a {tree}");
+	} elsif (!defined($pattern->{'tree'})) {
+		return warn("->Match($pattern) called, but pattern doesn't have a {tree}");
+	}
 	my $matches = _match($self -> {'tree'}, $pattern -> {'tree'}, {});
 	if (defined($matches)) {
 		foreach my $key (keys %{$matches}) {
@@ -357,64 +290,5 @@ sub Replace {
 	my $tree = _substitute($self -> {'tree'}, $pattern -> {'tree'}, $replacement -> {'tree'});
 	return main::ProofFormula(_tostr($tree));
 }
-
-##################################################
-#
-#	Here we override part of the answer comparison
-#	routines in order to be able to generate
-#	helpful error messages for students when
-#	they leave off the + C.
-#
-
-#
-#	Show hints by default
-#
-sub cmp_defaults {((shift)->SUPER::cmp_defaults)};
-
-######################################################################
-#
-#	This class replaces the Parser::Variable class, and its job
-#	is to look for new constants that aren't in the context,
-#	and add them in.	This allows students to use ANY constant
-#	they want, and a different one from the professor.	We check
-#	that the student only used ONE arbitrary constant, however.
-#
-package ProofFormula::Variable;
-our @ISA = ('Parser::Variable');
-
-sub new {
-	my $self = shift;
-	my $equation = shift;
-	#my $class = ref($self) || $self;
-	my $variables = $equation->{context}{variables};
-	my ($name, $ref) = @_;
-	my $pattern = substr($name, 0, 1) eq '@';
-	if ($pattern) {
-		$name = substr($name, 1);
-	}
-	my $def = $variables->{$name};
-
-	#
-	#	If the variable is not already in the context, add it
-	#		and mark it as an arbitrary constant (for later reference)
-	#
-	if (!defined($def)) {
-		$equation->{context}->variables->add($name => 'Real');
-		$equation->{context}->variables->set($name => {arbitraryConstant => 1});
-		$def = $variables->{$name};
-	}
-	#
-	#	Do the usual Variable stuff.
-	#
-	my $v = $self->SUPER::new($equation, $name, $ref);
-	if ($pattern) {
-		$v -> {'hole'} = $name;
-	}
-	return $v;
-}
-
-package ProofFormula::Function;
-our @ISA = ('Parser::Function');
-# TODO...
 
 1;

@@ -233,6 +233,10 @@ sub parseRPN {
 			}
 		}
 	}
+	if (scalar @stack == 0) {
+		return undef, "no expression was entered";
+	}
+
 	if (scalar @stack > 1) {
 		return undef, "unexpected value '" . $stack[1] . "'";
 	}
@@ -255,7 +259,13 @@ sub parseRPN {
 # Takes a string as an argument
 # RETURNS <expression ref>, <error string>
 sub parse {
-	my ($tokens, $err) = shunting(shift);
+	my $str = shift;
+	if (!defined($str)) {
+		warn("proofparsing::parse should be passed a string, not undef");
+		return undef, "INSTRUCTOR MISUSE";
+	}
+
+	my ($tokens, $err) = shunting($str);
 	if (!defined($tokens)) {
 		return undef, $err;
 	}
