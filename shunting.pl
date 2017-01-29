@@ -192,7 +192,7 @@ sub parseRPN {
 				}
 				my $arg = pop @stack;
 				my $fun = pop @stack;
-				push @stack, \{'type' => 'function', 'function' => $fun, 'arguments' => $arg};
+				push @stack, {'type' => 'function', 'function' => $fun, 'arguments' => $arg};
 			} else {
 				# Tuple
 				my $count = substr($action, 1);
@@ -213,7 +213,7 @@ sub parseRPN {
 					return undef, "misplaced operator '" . substr($action, 1) . "'";
 				}
 				my $arg = pop @stack;
-				push @stack, \{'type' => 'unary', 'argument' => $arg, 'op' => substr($action, 1)};
+				push @stack, {'type' => 'unary', 'argument' => $arg, 'op' => substr($action, 1)};
 			} else {
 				# Binary operator
 				if (scalar @stack < 2) {
@@ -221,15 +221,15 @@ sub parseRPN {
 				}
 				my $right = pop @stack;
 				my $left = pop @stack;
-				push @stack, \{'type' => 'binary', 'left' => $left, 'right' => $right, 'op' => $action};
+				push @stack, {'type' => 'binary', 'left' => $left, 'right' => $right, 'op' => $action};
 			}
 		} else {
 			# Atom (constant / variable / hole)
 			if (substr($action, 0, 1) eq '@') {
 				# Pattern variable
-				push @stack, \{'type' => 'pattern', 'name' => substr($action, 1)};
+				push @stack, {'type' => 'pattern', 'name' => substr($action, 1)};
 			} else {
-				push @stack, \{'type' => 'constant', 'value' => $action};
+				push @stack, {'type' => 'constant', 'value' => $action};
 			}
 		}
 	}
