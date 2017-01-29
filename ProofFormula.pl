@@ -53,8 +53,10 @@ sub Init {
 Init();
 
 sub TeX {
-	# TODO
-	return "foo";
+	my $self = shift;
+
+	# TODO: do this properly
+	return $self->Tostr();
 }
 
 # Create an instance of a ProofFormula.
@@ -88,7 +90,13 @@ sub _same {
 # makes a proof formula equivalent to this
 sub _form {
 	my $tree = shift;
-	return main::ProofFormula(_tostr($tree));
+	my $str = _tostr($tree);
+	my ($obj, $err) = ProofFormula::MAKE($str);
+
+	if (!defined($obj)) {
+		warn("something went wrong with _form; got '$str' as string, but when that was parsed I got parse error '$err'");
+	}
+	return $obj;
 }
 
 # makes a string from an expression tree
@@ -177,16 +185,11 @@ sub _match {
 	my $matches = shift;
 	#
 	if (ref($pattern) ne 'HASH') {
-		warn("pattern $pattern is not a hash / ref(pattern) is `" . ref($pattern) . "`");
-		return undef;
-	}
-	if (!exists($self->{'type'})) {
-		warn("self `$self` doesn't have a 'type'");
-		return undef;
-	}
-	if (!exists($pattern->{'type'})) {
-		warn("pattern `$pattern` doesn't have a 'type'");
-		return undef;
+		return warn("pattern $pattern is not a hash / ref(pattern) is `" . ref($pattern) . "`");
+	} elsif (!defined($self->{'type'})) {
+		return warn("self `$self` doesn't have a 'type'");
+	} elsif (!defined($pattern->{'type'})) {
+		return warn("pattern `$pattern` doesn't have a 'type'");
 	}
 
 	if ($pattern->{'type'} eq 'pattern') {
@@ -228,14 +231,19 @@ sub _match {
 		return _match($self->{'left'}, $pattern->{'left'}, $matches)
 			&& _match($self->{'right'}, $pattern->{'right'}, $matches);
 	} elsif ($pattern->{'type'} eq 'constant') {
-		if (_same($self, $pattern)) {
+		if ($self->{'type'} eq 'constant' && $self->{'value'} eq $pattern->{'value'}) {
 			return $matches;
 		}
 		return undef;
+	} elsif ($pattern->{'type'} eq 'function') {
+		if ($self->{'type'} ne 'function') {
+			return undef;
+		}
+		return _match($self->{'function'}, $pattern->{'function'}, $matches)
+			&& _match($self->{'arguments'}, $pattern->{'arguments'}, $matches);
 	}
 
-	main::TEXT(main::pretty_print($pattern));
-	return undef;
+	return warn("unhandled type ~" . $pattern->{'type'} . "~");
 }
 
 # Rule primitives
@@ -288,7 +296,7 @@ sub Replace {
 	my $pattern = shift;
 	my $replacement = shift;
 	my $tree = _substitute($self -> {'tree'}, $pattern -> {'tree'}, $replacement -> {'tree'});
-	return main::ProofFormula(_tostr($tree));
+	return _form($tree);
 }
 
 1;

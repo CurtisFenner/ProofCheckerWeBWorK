@@ -13,7 +13,7 @@ sub _tokenize {
 			$token = $1;
 			$ignore = 1;
 		}
-		if ($str =~ /^([\@0-9a-zA-Z.]+)/) {
+		if ($str =~ /^(@?[0-9a-zA-Z.]+)/) {
 			$token = $1;
 		}
 		if ($str =~ /^([\-\+\*\/=><&|^~]+)/) {
@@ -43,6 +43,9 @@ my %precedence = (
 	'/' => 4,
 	'+' => 2,
 	'-' => 2,
+
+	'=' => 0,
+	'&' => -1,
 );
 
 sub shunting {
@@ -157,7 +160,7 @@ sub shunting {
 			next;
 		}
 
-		warn "uncategorized token `$token`";
+		return undef, "uncategorized token `$token`";
 	}
 
 	while (scalar @stack > 0) {
@@ -273,4 +276,4 @@ sub parse {
 }
 
 # use Data::Dumper;
-# print( Dumper(parse("cos(5 + 1, 3)") ) );
+# print( Dumper(parse('exists(x, L(x, x) & H(x,x))') ) );
