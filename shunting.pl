@@ -48,6 +48,14 @@ my %precedence = (
 	'&' => -1,
 );
 
+sub Precedence {
+	my $op = shift;
+	if (!defined($precedence{$op})) {
+		warn("unknown operator ~$op~ passed to Precedence");
+	}
+	return $precedence{$op};
+};
+
 sub shunting {
 	my $str = shift;
 
@@ -277,3 +285,5 @@ sub parse {
 
 # use Data::Dumper;
 # print( Dumper(parse('exists(x, L(x, x) & H(x,x))') ) );
+
+return 1;

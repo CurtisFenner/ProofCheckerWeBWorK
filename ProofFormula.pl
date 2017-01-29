@@ -52,11 +52,61 @@ sub Init {
 
 Init();
 
+sub _tex {
+	my $tree = shift;
+	my $conP = shift;
+
+	my $type = $tree->{'type'};
+	if ($type eq 'pattern') {
+		return '\fbox{' . $tree->{'name'} . '}';
+	} elsif ($type eq 'constant') {
+		if (length($tree->{'value'}) > 1) {
+			return '\\textrm{' . $tree->{'value'} . '}';
+		}
+		return $tree->{'value'};
+	} elsif ($type eq 'binary') {
+		my $myP = proofparsing::Precedence($tree->{'op'});
+		my $op = $tree->{'op'};
+		if ($op eq '&') {
+			$op = '\text{ and }';
+		}
+		my $out = _tex($tree->{'left'}, $myP) . ' ' . $op . ' ' . _tex($tree->{'right'}, $myP);
+		if ($conP > $myP) {
+			return '(' . $out . ')';
+		}
+		return $out;
+	} elsif ($type eq 'unary') {
+		my $myP = proofparsing::Precedence('u' . $tree->{'op'});
+		my $out = $op . ' ' . _tex($tree->{'argument'}, $myP);
+		if ($conP > $myP) {
+			return '(' . $out . ')';
+		}
+		return $out;
+	} elsif ($type eq 'tuple') {
+		my $out = '(';
+		for (my $i = 0; $i < $tree->{'count'}; $i++) {
+			if ($i > 0) {
+				$out .= ', ';
+			}
+			$out .= _tex($tree->{$i}, -10000);
+		}
+		return $out . ')';
+	} elsif ($type eq 'function') {
+		my $base = _tex($tree->{'function'}, 10000);
+		my $arg = _tex($tree->{'arguments'}, 10000);
+		if (substr($arg, 0, 1) ne '(') {
+			$arg = '(' . $arg . ')';
+		}
+		return $base . ' ' . $arg;
+	}
+	warn("unknown type $type for TeX");
+}
+
 sub TeX {
 	my $self = shift;
 
 	# TODO: do this properly
-	return $self->Tostr();
+	return _tex($self->{'tree'}, -10000);
 }
 
 # Create an instance of a ProofFormula.
