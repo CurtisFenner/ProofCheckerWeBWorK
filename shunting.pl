@@ -46,6 +46,7 @@ my %precedence = (
 
 	'=' => 0,
 	'&' => -1,
+	'=>' => -2,
 );
 
 sub Precedence {
@@ -73,7 +74,7 @@ sub shunting {
 	my @tokens = ();
 	my $previous = "(";
 	foreach my $token (@$rawtokens) {
-		if ($token eq '(' && !exists($precedence{$previous}) && $previous ne '(') {
+		if ($token eq '(' && !exists($precedence{$previous}) && $previous ne '(' && $previous ne ',') {
 			push @tokens, '$';
 			push @tokens, '(';
 		} elsif (exists($precedence{$token . 'u'}) && ($i == 0 || $previous eq "(" || exists($precedence{$previous}))) {
