@@ -140,7 +140,12 @@ sub _same {
 # makes a proof formula equivalent to this
 sub _form {
 	my $tree = shift;
-	my $str = _tostr($tree);
+	if (!defined($tree->{'type'})) {
+		warn("in _form(tree), tree $tree has no type; keys are (" . join(", ", keys %$tree) . ")");
+		return undef;
+	}
+
+	my $str = _tostr($tree, "_form");
 	my ($obj, $err) = ProofFormula::MAKE($str);
 
 	if (!defined($obj)) {
@@ -153,28 +158,35 @@ sub _form {
 sub _tostr {
 	my $tree = shift;
 	my $type = $tree->{'type'};
+	my $cause = shift || "";
+
+	if (!defined($type)) {
+		warn("in _tostr(tree), tree $tree has no type; keys are (" . join(", ", keys %$tree) . "). cause is listed as `$cause`");
+		return "UNDEFINED-TYPE";
+	}
 
 	if ($type eq 'pattern') {
 		return '@' . $tree->{'name'};
 	} elsif ($type eq 'constant') {
 		return $tree->{'value'};
 	} elsif ($type eq 'binary') {
-		return '(' . _tostr($tree->{'left'}) . ' ' . $tree->{'op'} . ' ' . _tostr($tree->{'right'}) . ')';
+		return '(' . _tostr($tree->{'left'}, "$cause {left}") . ' ' . $tree->{'op'} . ' ' . _tostr($tree->{'right'}, "$cause {right}") . ')';
 	} elsif ($type eq 'unary') {
-		return '(' . $tree->{'op'} . ' ' . _tostr($tree->{'argument'}) . ')';
+		return '(' . $tree->{'op'} . ' ' . _tostr($tree->{'argument'}, "$cause {argument}") . ')';
 	} elsif ($type eq 'tuple') {
 		my $out = '(';
+		main::pretty_print($tree);
 		for (my $i = 0; $i < $tree->{'count'}; $i++) {
 			if ($i > 0) {
 				$out .= ', ';
 			}
-			$out .= _tostr($tree->{$i});
+			$out .= _tostr($tree->{$i}, "$cause {$i of " . $tree->{'count'} . "}");
 		}
 		return $out . ')';
 	} elsif ($type eq 'function') {
 		# Careful: I assume the {function} is unparenthesized,
 		# because that's currently an assumption of the parser
-		return _tostr($tree->{'function'}) . '(' . _tostr($tree->{'arguments'}) . ')';
+		return _tostr($tree->{'function'}) . '(' . _tostr($tree->{'arguments'}, "$cause {arguments}") . ')';
 	}
 
 	warn("unrecognized expression type '$type'");
@@ -183,13 +195,24 @@ sub _tostr {
 
 sub Tostr {
 	my $self = shift;
-	return _tostr( $self -> {'tree'} );
+	return _tostr($self -> {'tree'}, "Tostr");
 }
 
 sub _substitute {
 	my $tree = shift;
 	my $needle = shift;
 	my $replacement = shift;
+
+	if (!defined($tree->{'type'})) {
+		return warn("tree $tree has undefined 'type' in _substitute");
+	}
+	if (!defined($needle->{'type'})) {
+		return warn("needle $needle has undefined 'type' in _substitute");
+	}
+	if (!defined($replacement->{'type'})) {
+		return warn("replacement $replacement has undefined 'type' in _substitute");
+	}
+
 	if (_same($tree, $needle)) {
 		return $replacement;
 	}
@@ -214,7 +237,7 @@ sub _substitute {
 	} elsif ($type eq 'tuple') {
 		my %elements = ('type'=>'tuple', 'count' => $tree->{'count'});
 		for (my $i = 0; $i < $tree->{'count'}; $i++) {
-		 	$elements[$i] = _substitute($tree->{'coords'}->{$i}, $needle, $replacement);
+		 	$elements{$i} = _substitute($tree->{$i}, $needle, $replacement);
 		}
 		return \%elements;
 	} elsif ($type eq 'function') {
@@ -314,7 +337,12 @@ sub Contains {
 	my $self = shift;
 	my $needle = shift;
 
-	my $without = $self -> Replace($needle, main::ProofFormula('@Q'));
+	my ($o, $e) = ProofFormula::MAKE('@Q');
+	if (!defined($o)) {
+		warn("something went wrong: $e");
+	}
+
+	my $without = $self -> Replace($needle, $o);
 
 	if ($without -> Same($self)) {
 		return 0;
@@ -345,6 +373,7 @@ sub Replace {
 	my $self = shift;
 	my $pattern = shift;
 	my $replacement = shift;
+
 	my $tree = _substitute($self -> {'tree'}, $pattern -> {'tree'}, $replacement -> {'tree'});
 	return _form($tree);
 }

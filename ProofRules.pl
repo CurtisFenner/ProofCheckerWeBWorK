@@ -72,8 +72,11 @@ our %ProofRules = (
 				return $line . " is not an instantiation of " . $thereExists;
 			}
 
-			if (!($var -> {'v'} -> {'tree'} -> {'name'})) {
-				return "you must instantiate to a name, not a complex expression like " . $var -> {'v'};
+			if ($var -> {'v'} -> {'tree'} -> {'type'} ne 'constant') {
+				return "you must instantiate to a name, not a complex expression like " . $var -> {'v'} . " with type " . $var->{'v'}->{'tree'}->{'type'};
+			}
+			if (!($var -> {'v'} -> {'tree'} -> {'value'} =~ /^[a-zA-Z]+$/)) {
+				return "you must instantiate to a name, not a number/constant like " . $var -> {'v'};
 			}
 			if ($thereExists -> Contains($var -> {'v'})) {
 				return "the instantiated name " . $var->{'v'} . " must not appear in " . $thereExists;
