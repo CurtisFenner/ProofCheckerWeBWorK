@@ -67,8 +67,11 @@ sub _tex {
 	} elsif ($type eq 'binary') {
 		my $myP = proofparsing::Precedence($tree->{'op'});
 		my $op = $tree->{'op'};
+		if ($op eq '=>') {
+			$op = ' \implies ';
+		}
 		if ($op eq '&') {
-			$op = '\text{ and }';
+			$op = ' \wedge ';
 		}
 		my $out = _tex($tree->{'left'}, $myP) . ' ' . $op . ' ' . _tex($tree->{'right'}, $myP);
 		if ($conP > $myP) {
