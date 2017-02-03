@@ -191,7 +191,12 @@ sub _get_blank {
 	my $self = shift;
 	my $name = shift;
 	my $inputs = $main::inputs_ref;
-	return $inputs -> {$name};
+	# return the result
+	my $out = $inputs -> {$name};
+	if (!defined($out)) {
+		return "";
+	}
+	return $out;
 }
 
 my $ALPHA = "ABCDEFG";
