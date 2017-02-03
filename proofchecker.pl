@@ -21,6 +21,7 @@ $ac -> show();
 =cut
 
 loadMacros("MathObjects.pl"); # ?
+loadMacros("dropdown.pl");
 
 ###########################################################
 
@@ -444,7 +445,21 @@ sub show {
 		main::TEXT('</td>');
 		main::TEXT('<td>by</td>');
 		main::TEXT('<td>');
-		push @reasonBlanks, $self->_show_blank(20);
+
+		# Load the list of axiom names into a dropdown
+		my @axiomNames = ("");
+		while (my ($k, $rule) = each %{$self->{'axioms'}}) {
+			if ($k ne 'given') {
+				push @axiomNames, $rule->{'name'};
+			}
+		}
+		@axiomNames = main::lex_sort(@axiomNames);
+
+		# Create and show a dropdown
+		my $drop = Dropdown->new(\@axiomNames);
+		push @reasonBlanks, $drop->html();
+
+		# End the row with the line-number input boxes
 		main::TEXT('</td>');
 		main::TEXT('<td>on</td>');
 		my @blanks = ();
