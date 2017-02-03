@@ -519,7 +519,9 @@ sub show {
 			}
 			my @just = ($reason);
 			for (my $c = 0; $c < $cols; $c++) {
-				push @just, int($self -> _get_blank($dependsBlanks[$i]->[$c]) || 0);
+				my $lineStr = $self -> _get_blank($dependsBlanks[$i]->[$c]);
+				$lineStr =~ s/\D+//g;
+				push @just, int($lineStr || 0);
 			}
 			push @reasons, \@just;
 		}
