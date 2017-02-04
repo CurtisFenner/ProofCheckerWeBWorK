@@ -401,25 +401,40 @@ sub show {
 	# Declare the usable logical deduction rules to the student
 	# (since the current interface requires students type the
 	# exact names, this is very necessary)
-	main::TEXT('Using the provided statements and deduction rules, prove that \(' . $self->{'target'}->TeX() . '\).' . $main::BR);
-	main::TEXT("You can use the following axioms/logical rules:<ul>");
 	$axioms = $self -> {'axioms'};
-	foreach my $key (keys %$axioms) {
+	my @axiomDescriptions = ();
+	while (my ($key, $axiom) = each %$axioms) {
 		if ($key ne 'given') {
-			main::TEXT("<li>" . $axioms -> {$key} -> {'name'});
-			my @dep = @{$axioms -> {$key} -> {'depends'}};
+			# Update number of columns needed
+			my @dep = @{$axiom -> {'depends'}};
 			if (scalar @dep > $cols) {
 				$cols = scalar @dep;
 			}
+
+
+			# Build the description of the rule
+			my $row = "<strong>" . $axiom -> {'name'} . "</strong>";
 			if (scalar @dep) {
 				for (my $i = 0; $i < scalar @dep; $i++) {
 					$dep[$i] = substr($ALPHA, $i, 1) . ": " . $dep[$i];
 				}
-				main::TEXT("(" . join(", ", @dep) . ")");
+				$row .= " (" . join(", ", @dep) . ")";
 			}
-			main::TEXT("</li>\n");
+			if (defined($axiom->{'open'})) {
+				$row = "Begin a $row sub-proof";
+			} elsif ($key eq 'conclude') {
+				$row = "$row a sub-proof";
+			}
+
+			push @axiomDescriptions, "<li>$row</li>";
 		}
 	}
+	@axiomDescriptions = main::lex_sort(@axiomDescriptions);
+
+	# Render the description of the available deduction rules
+	main::TEXT('Using the provided statements and deduction rules, prove that \(' . $self->{'target'}->TeX() . '\).' . $main::BR);
+	main::TEXT("You can use the following axioms/logical deduction rules:<ul>");
+	main::TEXT(join "", @axiomDescriptions);
 	main::TEXT("</ul>\n\n");
 
 	# Output the proof table
@@ -451,7 +466,7 @@ sub show {
 		main::TEXT('<td>by</td>');
 		main::TEXT('<td>');
 
-		# Load the list of axiom names into a dropdown
+		# Get an alphabetical list of the available deduction rules
 		my @axiomNames = ("");
 		while (my ($k, $rule) = each %{$self->{'axioms'}}) {
 			if ($k ne 'given') {
@@ -460,8 +475,24 @@ sub show {
 		}
 		@axiomNames = main::lex_sort(@axiomNames);
 
+		# Create "labels" which are extra-processed
+		my @axiomLabels = ("");
+		foreach my $name (@axiomNames) {
+			while (my ($k, $rule) = each %{$self->{'axioms'}}) {
+				if ($rule->{'name'} eq $name) {
+					if ($k eq 'conclude') {
+						push @axiomLabels, "Conclude sub-proof";
+					} elsif (defined($rule->{'open'})) {
+						push @axiomLabels, 'begin ' . $rule->{'name'} . ' sub-proof';
+					} else {
+						push @axiomLabels, $rule->{'name'};
+					}
+				}
+			}
+		}
+
 		# Create and show a dropdown
-		my $drop = Dropdown->new(\@axiomNames);
+		my $drop = Dropdown->new(\@axiomLabels);
 		push @reasonBlanks, $drop->html();
 
 		# End the row with the line-number input boxes
