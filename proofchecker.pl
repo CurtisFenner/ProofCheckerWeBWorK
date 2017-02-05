@@ -492,7 +492,7 @@ sub show {
 		}
 
 		# Create and show a dropdown
-		my $drop = Dropdown->new(\@axiomLabels);
+		my $drop = Dropdown->new(\@axiomLabels, \@axiomNames);
 		push @reasonBlanks, $drop->html();
 
 		# End the row with the line-number input boxes
