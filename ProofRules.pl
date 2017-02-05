@@ -149,7 +149,7 @@ our %ProofRules = (
 			}
 			my $instancePattern = $fam -> {'predicate'} -> Replace( $fam -> {'variable'}, E('@x') );
 			if (! $line -> Match($instancePattern)) {
-				return "not a valid instantiation of " . $forall;
+				return '\(' . $line->TeX() . '\) is not a valid instantiation of \(' . $forall->TeX() . '\)';
 			}
 			return 0;
 		},
