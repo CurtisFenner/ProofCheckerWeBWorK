@@ -35,6 +35,16 @@ sub _tokenize {
 	return \@tokens, undef;
 }
 
+my %aliases = (
+	'and' => '&',
+	'^' => '&',
+	#
+	'implies' => '=>',
+
+	'all' => 'forall',
+	'exist' => 'exists',
+);
+
 my %precedence = (
 	'$' => 9999999999,
 	'-u' => 100,
@@ -63,6 +73,12 @@ sub shunting {
 	my ($rawtokens, $err) = _tokenize($str);
 	if (!defined($rawtokens)) {
 		return undef, $err;
+	}
+
+	for (my $i = 0; $i < scalar @$rawtokens; $i++) {
+		if (defined($aliases{$rawtokens->[$i]})) {
+			$rawtokens->[$i] = $aliases{$rawtokens->[$i]};
+		}
 	}
 
 	my %right = (
