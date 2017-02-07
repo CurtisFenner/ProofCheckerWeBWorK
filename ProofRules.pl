@@ -125,7 +125,7 @@ our %ProofRules = (
 			my $existsPattern = E('exists(@variable, @predicate)');
 			my $em = $line -> Match($existsPattern);
 			if (!$em) {
-				return "`" . $line->TeX() . "` must be a there-exists statement to be the conclusion of existential-introduction.";
+				return "\\(" . $line->TeX() . "\\) must be a there-exists statement to be deduced from existential-introduction.";
 			}
 			my $instantiationPattern = $em -> {'predicate'} -> Replace($em -> {'variable'}, E('@v'));
 			if (! $stat->Match($instantiationPattern) ) {
