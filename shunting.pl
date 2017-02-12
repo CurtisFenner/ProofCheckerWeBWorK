@@ -45,6 +45,16 @@ my %aliases = (
 	'exist' => 'exists',
 );
 
+sub Quantifier {
+	my $arg = shift;
+	if ($arg eq 'forall') {
+		return "\\forall";
+	} elsif ($arg eq 'exists') {
+		return "\\exists";
+	}
+	return undef;
+}
+
 my %precedence = (
 	'$' => 9999999999,
 	'-u' => 100,

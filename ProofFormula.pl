@@ -95,7 +95,27 @@ sub _tex {
 		}
 		return $out . ')';
 	} elsif ($type eq 'function') {
-		my $base = _tex($tree->{'function'}, 10000);
+		my $fun = $tree->{'function'};
+		my $base = _tex($fun, 10000);
+
+		# Display as quantifier
+		if ($fun->{'type'} eq 'constant' && $tree->{'arguments'}->{'type'} eq 'tuple' && $tree->{'arguments'}->{'count'} == 2) {
+			my $first = $tree->{'arguments'}->{0};
+			my $second = $tree->{'arguments'}->{1};
+
+			if ($first->{'type'} eq 'constant') {
+				my $tex = proofparsing::Quantifier($fun->{'value'});
+				if (defined($tex)) {
+					my $inside = " $tex " . _tex($first, -100000) . ' \; ' . _tex($second, -100000);
+					if ($conP >= -999) {
+						return "($inside)";
+					}
+					return $inside;
+				}
+			}
+		}
+
+		# Display as function
 		my $arg = _tex($tree->{'arguments'}, 10000);
 		if (substr($arg, 0, 1) ne '(') {
 			$arg = '(' . $arg . ')';
