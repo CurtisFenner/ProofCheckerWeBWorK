@@ -199,7 +199,7 @@ sub _get_blank {
 	return $out;
 }
 
-my $ALPHA = "ABCDEFG";
+my @ALPHA = ("&#9398;", "&#9399;", "&#9400;", "&#9401;", "&#9402;", "&#9403;");
 
 sub _collect_arguments {
 	my $row = shift; # row number (1 indexed -- for human)
@@ -218,30 +218,31 @@ sub _collect_arguments {
 				push @thoseInScope, $k+1;
 			}
 		}
-		my $thoseInScope = "No statements";
+		my $inScopeMessage = "No statements";
 		if (scalar @thoseInScope > 1) {
 			my $last = pop @thoseInScope;
-			$thoseInScope = "Statements " . join(', ', @thoseInScope) . " and $last";
+			$inScopeMessage = "Statement numbers " . join(', ', @thoseInScope) . " and $last";
 		} elsif (scalar @thoseInScope == 1) {
-			$thoseInScope = "Statement " . $thoseInScope[0];
+			$inScopeMessage = "Statement number " . $thoseInScope[0];
 		}
+		$inScopeMessage = "$inScopeMessage can be used to fill the inputs in line $row.";
 
 		if (!defined($line) || !$line) {
 			return {
 				problem =>
-				"You left column " . substr($ALPHA, $j, 1) . " blank. "
-				. "You need to specify which line number of the " . $name . " that you're referring to. $thoseInScope are in scope at this point."
+				"You left column " . $ALPHA[$j] . " blank.<br>"
+				. "You need to specify in column " . $ALPHA[$j] . " the line number of the $name that you want to refer to.<br>$inScopeMessage"
 			};
 		}
 		my $index = $line - 1;
 		if ($index < 0 || $index >= $row - 1) {
-			return {problem => $line . " is not in the scope of line " . $row . ". $thoseInScope are in scope at this point."};
+			return {problem => $line . " is not in the scope of line $row.<br>$inScopeMessage"};
 		}
 		if (! $statements -> [$index] -> {'inScope'}) {
-			return {problem => "line $line is no longer in scope and can't be referenced from row $row. $thoseInScope are in scope at this point."};
+			return {problem => "line $line is no longer in scope and can't be referenced from row $row.<br>$inScopeMessage"};
 		}
 		if (! defined($statements -> [$index])) {
-			return {problem => "statement $line is invalid; fix it before referring to it."};
+			return {problem => "statement $line is invalid<br>.Fix line $line before referring to it."};
 		}
 		push @dep, $statements -> [$index];
 	}
@@ -363,14 +364,15 @@ sub _check {
 			$statements->[$i] -> {'indent'} = scalar @opens;
 		}
 	}
-	#
-	$summary = "Analyzed:";
+
+	# Create the final summary
+	my $summary = "Problems were found with the following lines:";
 	if (scalar @opens) {
 		my $lastOpen = $opens[scalar @opens - 1] + 1;
-		$summary = "You didn't close the sub-proof that was opened on line " . $lastOpen . ";";
+		$summary = "You didn't close the sub-proof that was opened on line " . $lastOpen . "; all subproofs must be finished in order to finish the main proof.";
 		$correct = 0;
 	} elsif ($correct) {
-		$summary = "All justifications are valid.";
+		$summary = "All lines were justified correctly.";
 	} else {
 		# (@messages are shown after $summary)
 	}
@@ -416,7 +418,7 @@ sub show {
 			my $row = "<strong>" . $axiom -> {'name'} . "</strong>";
 			if (scalar @dep) {
 				for (my $i = 0; $i < scalar @dep; $i++) {
-					$dep[$i] = substr($ALPHA, $i, 1) . ": " . $dep[$i];
+					$dep[$i] = $ALPHA[$i] . ": " . $dep[$i];
 				}
 				$row .= " (" . join(", ", @dep) . ")";
 			}
@@ -442,7 +444,7 @@ sub show {
 	main::TEXT("<tr>");
 	main::TEXT("<th>#</th> <th>Statement</th> <th></th> <th>Justification</th><th></th>");
 	for (my $c = 0; $c < $cols; $c++) {
-		main::TEXT("<th>" . substr($ALPHA, $c, 1) . "</th>");
+		main::TEXT("<th>" . $ALPHA[$c] . "</th>");
 	}
 	main::TEXT("</tr>");
 
@@ -564,12 +566,14 @@ sub show {
 
 		# _check() this proof, and combine any problems/error-messages into the summary
 		my ($messages, $correct, $summary) = $self -> _check(\@statements, \@reasons);
+		$summary .= "<ol style='text-align:left;'>";
 		for (my $i = 0; $i < $self -> {num_blanks}; $i++) {
-			my $p = $problems{$i + $offset} || $messages -> [$i + $offset];
-			if ($p) {
-				$summary .= $main::BR . ($i + $offset + 1) . '. ' . $p;
+			my $problem = $problems{$i + $offset} || $messages -> [$i + $offset];
+			if ($problem) {
+				$summary .= "<li value='" . ($i + $offset + 1) . "'>" . $problem . "</li>";
 			}
 		}
+		$summary .= "</ol>";
 
 		# Draw latex proof table
 		my $latex = '\begin{array}{r|l}';

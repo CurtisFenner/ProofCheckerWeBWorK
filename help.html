@@ -1,0 +1,191 @@
+<!doctype html>
+<html>
+<head>
+	<title>Proof Questions - Help</title>
+	<style>
+	body {
+		font-family: sans-serif;
+		max-width: 7.5in;
+		margin: auto;
+		padding: 0.5in;
+	}
+
+	img {
+		max-width: 100%;
+	}
+
+	code {
+		display: inline-block;
+		background: #EEE;
+		padding: 0.125em;
+		font-size: 115%;
+	}
+
+	h1 {
+		font-size: 200%;
+	}
+	h2 {
+		font-size: 180%;
+	}
+	h3 {
+		font-size: 160%;
+	}
+	</style>
+</head>
+<body>
+	<h1>Proof Questions - Overview</h1>
+	<p>A <strong>proof question</strong> on WeBWorK asks you to formally
+	show that some statement is true.
+
+	<p>The problem gives you several pieces of information:
+	<ul>
+		<li>The <em>conclusion</em> which is the statement that
+			you are trying to show to be true.
+		<li>The <em>given statements</em> which is what you are
+			told you know to be true.
+		<li>The <em>deduction rules</em> which are the ways
+			statements can logically follow from previous statements
+	</ul>
+
+	<p>For this problem, you must write a series of statements which
+	logically follow from the <em>given statements</em> that end
+	with the specified <em>conclusion</em>.
+
+	<p>Each <em>line</em> in the proof is made up of several parts:
+	<ul>
+		<li>The <em>statement</em> the line asserts to be true
+		<li>The <em>justification</em> of the line which includes
+			<ul>
+				<li>a <em>deduction rule</em>
+				<li>some <em>references</em> to previous lines
+					that the deduction rule requires
+			</ul>
+	</ul>
+
+	<p>WeBWorK <em>verifies</em> that each line in your proof is
+	valid. When you "Preview my Answers" or "Check Answers", any
+	problems with your proof will be pointed out.
+
+	<p>The checker is <strong>very pedantic</strong>. It requires
+	you to write proofs that <strong>skip no steps</strong>.
+	Something as simple as <code>x+y</code> being replaced with
+	<code>y+x</code> needs a line in your proof.
+
+	<p>There are multiple ways to type some statements.
+	You can use <em>whichever one you prefer</em>, though the ones
+	with more parenthesis might be helpful if WeBWorK is having
+	trouble understanding you.
+
+	<h2>Solving and Filling-Out Proof Problems</h2>
+	<p>It is probably easiest to <em>first sketch the solution out
+	on paper</em>. Once you have the basic outline planned on paper,
+	try <em>entering the proof one line at a time</em>.
+
+	<p>You can <strong>click "Preview My Answers" to get feedback
+	on your proof so-far</strong>. Getting your proof accepted one
+	line at a time will make fixing typos and logic errors less
+	frustrating.
+
+	<h3>A simple example - Notation</h3>
+	<p>Let's use the proof checker to check the famous syllogism,
+
+	<blockquote>
+		All men are mortal.<br>
+		Socrates is a man.<br>
+		Therefore, Socrates is mortal.
+	</blockquote>
+
+	<p>First, this has to be written in a more formal notation.
+
+	<p><strong>Predicates</strong> like <code>x is mortal</code>
+	are typically written as <code>mortal(x)</code> in math.
+	The following three formats are all allowed and are equivalent:
+	<ul>
+		<li><code>x is a mortal</code>
+		<li><code>x is mortal</code>
+		<li><code>mortal(x)</code>
+	</ul>
+
+	<p><strong>Implications</strong> like "a man is mortal" must
+	be written as explicit implications. You can use
+	<code>if ... then ...</code> or <code>=&gt;</code> to create
+	implications.
+
+	<p>For example, "a man is a mortal" might be written as either
+	<ul>
+		<li><code>if x is a man then x is a mortal</code>
+		<li><code>x is a man => x is a mortal</code>
+	</ul>
+
+	<p><strong>General statements</strong> like those involving the
+	words <strong>all</strong> or <strong>any</strong> must be stated
+	explicitly using <strong>quantifiers</strong>.
+
+	<p>Quantifiers can be written like predicates; they can also be
+	written without <code>()</code>.
+
+	<p>For example,
+	"everyone loves icecream" might be written as any of the following:
+	<ul>
+		<li><code>forall(x, loves(x, icecream))</code>
+		<li><code>all(x, loves(x, icecream))</code>
+		<li><code>forall x loves(x, icecream)</code>
+		<li><code>all x loves(x, icecream)</code>
+	</ul>
+
+	<h3>A simple example - WeBWorK</h3>
+
+	<p>Here is how the problem would be presented to you in WeBWorK.
+	(This is the first exercise assigned to you; you can follow along!)
+
+	<p><img src="blank-syllogism.png" alt="a simple syllogism in webwork">
+
+	<p>You can recognize that we want to use
+	<code>x is a man => x is a mortal</code>
+	together with the fact that <code>Socrates is a man</code>.
+	The deduction rule that allows us to use <code>A => B</code> and
+	<code>A</code>
+	together to conclude <code>B</code> is called
+	<strong>modus ponens</strong>.
+
+	<p>First, try entering <code>Socrates is mortal</code>.
+	Click "Preview My Answers" to see what WeBWorK has to say about that.
+
+	<p><img src="no-reason-syllogism.png">
+	<p>WeBWorK will tell you that you need to include a justification for
+	the line you just added. Pick <em>modus&nbsp;ponens</em> from the
+	dropdown.
+
+	<p><img src="refers-syllogism.png">
+	<p>WeBWorK asks you to tell it what previous lines this new line is
+	referring to. In this case, we want column &#9398; to refer to line 1
+	and column &#9399; to refer to line 2. You can look at either the error
+	message or the list of deduction rules to see what is expected for each
+	column.
+
+	<p><img src="eliminate-syllogism.png">
+	<p>WeBWorK rejects this attempt because line 1 is actually a
+	<em>quantified</em> implication, but modus ponens requires a
+	<em>bare</em> implication.
+
+	<p><strong>Sorry, but the computer is pedantic.</strong> We need to get
+	a statement that looks <strong>exactly</strong> like
+	<code>man(Socrates) => mortal(Socrates)</code> in order to use it with
+	<code>man(Socrates)</code>.
+
+	<p>We can <em>conclude</em> such a statement from line 1 using the
+	<em>Eliminate a For-All</em> deduction rule.
+
+	<p><img src="eliminated-syllogism.png">
+
+	<p>Finally, modus-ponens can be used to reach the conclusion.
+
+	<p><img src="correct-syllogism.png">
+
+	<p>You can submit your correct proof!
+
+	<p>Being this careful can help you avoid writing incorrect proofs.
+	Taking smaller steps can help you avoid logical fallacies and
+	other pitfalls that WeBWorK will reject. However, writing proofs
+	in this way is not easy.
+</body>

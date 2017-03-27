@@ -12,7 +12,7 @@ sub E {
 our %ProofRules = (
 ########################################################################################################################
 	"universal_introduction" => {
-		name => 'Universal Introduction',
+		name => 'Create a For-All',
 		depends => ["statement about 'free variable'"], # student visible
 		test => sub {
 			my $line = shift; # ex. line: forall(x, P(x))
@@ -50,7 +50,7 @@ our %ProofRules = (
 	},
 ########################################################################################################################
 	"existential_elimination" => {
-		name => 'Existential Elimination',
+		name => 'Exliminate a There-Exists',
 		depends => ["there-exists statement"],
 		open => sub {
 			# 1) instantiation variable `a` must not appear in any in-scope assumption
@@ -116,7 +116,7 @@ our %ProofRules = (
 	},
 ########################################################################################################################
 	"existential_introduction" => {
-		name => 'Existential Introduction',
+		name => 'Create a There-Exists',
 		depends => ['statement'],
 		test => sub {
 			my $line = shift; # exists(x, P(x))
@@ -136,7 +136,7 @@ our %ProofRules = (
 	},
 ########################################################################################################################
 	"universal_elimination" => {
-		name => 'Universal Elimination',
+		name => 'Eliminate a For-All',
 		depends => ["for-all statement"], # give a student-visible name to the argument of this reason
 		test => sub {
 			my $line = shift;
@@ -156,7 +156,7 @@ our %ProofRules = (
 	},
 ########################################################################################################################
 	"conjunction_elimination" => {
-		name => 'Conjunction Elimination',
+		name => 'Eliminate an And',
 		depends => ["and-statement"],
 		test => sub {
 			my $line = shift;
@@ -175,7 +175,7 @@ our %ProofRules = (
 	},
 ########################################################################################################################
 	"conjunction_introduction" => {
-		name => 'Conjunction Introduction',
+		name => 'Create an And',
 		depends => ["first statement", "second statement"],
 		test => sub {
 			my $line = shift;
@@ -198,7 +198,7 @@ our %ProofRules = (
 	},
 ########################################################################################################################
 	"implication_introduction" => {
-		name => 'Implication Introduction',
+		name => 'Suppose to create an Implication',
 		depends => [],
 		open => sub {
 			my $line = shift;
@@ -239,10 +239,16 @@ our %ProofRules = (
 			my $implicationPattern = E('@p => @q');
 			my $im = $pimpliesq -> Match($implicationPattern);
 			if (!$im) {
-				return 'The first argument of modus-ponens should be an implication, but \(' . $pimpliesq->TeX() . '\) was used.';
+				my $output = 'The first argument of modus-ponens should be an implication.<br>However, \(' . $pimpliesq->TeX() . '\) was used.';
+				$output .= "<br>You cannot directly use a for-all or there-exists statement here.";
+				$output .= "<br>You should first eliminate the quantifier using Eliminate For-All or Eliminate There-Exists so that a simple implication is left.";
+				return $output;
 			}
 			if (!$im->{'p'}->Same($p)) {
-				return '\(' . $p->TeX() . '\) should match the left side of \(' . $pimpliesq->TeX() . '\)';
+				my $output = '\(' . $p->TeX() . '\) should match the left side of \(' . $pimpliesq->TeX() . '\)';
+				$output .= "<br>You cannot directly use a for-all or there-exists statement here.";
+				$output .= "<br>You should first eliminate the quantifier using Eliminate For-All or Eliminate There-Exists so that a simple implication is left.";
+				return $output;
 			}
 			if (!$im->{'q'}->Same($line)) {
 				return 'The conclusion \(' . $line->TeX() . '\) should match the right side of \(' . $pimpliesq->TeX() . '\)';
