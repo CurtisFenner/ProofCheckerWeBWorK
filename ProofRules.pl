@@ -50,7 +50,7 @@ our %ProofRules = (
 	},
 ########################################################################################################################
 	"existential_elimination" => {
-		name => 'Exliminate a There-Exists',
+		name => 'Eliminate a There-Exists',
 		depends => ["there-exists statement"],
 		open => sub {
 			# 1) instantiation variable `a` must not appear in any in-scope assumption

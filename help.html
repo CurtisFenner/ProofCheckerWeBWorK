@@ -37,23 +37,23 @@
 	<p>A <strong>proof question</strong> on WeBWorK asks you to formally
 	show that some statement is true.
 
-	<p>The problem gives you several pieces of information:
+	<p>A proof-question gives you several pieces of information:
 	<ul>
-		<li>The <em>conclusion</em> which is the statement that
-			you are trying to show to be true.
 		<li>The <em>given statements</em> which is what you are
 			told you know to be true.
 		<li>The <em>deduction rules</em> which are the ways
 			statements can logically follow from previous statements
+		<li>The <em>conclusion</em> which is the statement that
+			you are trying to show to be true.
 	</ul>
 
-	<p>For this problem, you must write a series of statements which
+	<p>For a proof question, you must write a series of statements which
 	logically follow from the <em>given statements</em> that end
 	with the specified <em>conclusion</em>.
 
 	<p>Each <em>line</em> in the proof is made up of several parts:
 	<ul>
-		<li>The <em>statement</em> the line asserts to be true
+		<li>The <em>statement</em> that the line asserts to be true
 		<li>The <em>justification</em> of the line which includes
 			<ul>
 				<li>a <em>deduction rule</em>
@@ -62,29 +62,30 @@
 			</ul>
 	</ul>
 
-	<p>WeBWorK <em>verifies</em> that each line in your proof is
-	valid. When you "Preview my Answers" or "Check Answers", any
-	problems with your proof will be pointed out.
+	<p>WeBWorK <em>verifies</em> that each line in your proof
+	correctly follows from the lines before it.
+	When you click "Preview My Answers" or "Check Answers",
+	WeBWorK will point out any problems in your proof.
 
-	<p>The checker is <strong>very pedantic</strong>. It requires
-	you to write proofs that <strong>skip no steps</strong>.
+	<p><strong>The checker is very pedantic</strong>. It requires
+	you to <strong>write proofs that skip no steps</strong>.
 	Something as simple as <code>x+y</code> being replaced with
 	<code>y+x</code> needs a line in your proof.
 
 	<p>There are multiple ways to type some statements.
 	You can use <em>whichever one you prefer</em>, though the ones
-	with more parenthesis might be helpful if WeBWorK is having
+	with more parentheses might be helpful if WeBWorK is having
 	trouble understanding you.
 
 	<h2>Solving and Filling-Out Proof Problems</h2>
-	<p>It is probably easiest to <em>first sketch the solution out
-	on paper</em>. Once you have the basic outline planned on paper,
-	try <em>entering the proof one line at a time</em>.
+	<p>It is probably easiest to <strong>first sketch the solution out
+	on paper</strong>. Once you have the basic outline planned on paper,
+	then <strong>try to enter the proof one line at a time</strong>.
 
-	<p>You can <strong>click "Preview My Answers" to get feedback
-	on your proof so-far</strong>. Getting your proof accepted one
-	line at a time will make fixing typos and logic errors less
-	frustrating.
+	<p>You can <strong>click "Preview My Answers" at any time to get
+	feedback on the proof you've written so far</strong>. Getting your
+	proof accepted one line at a time will make fixing typos and logic
+	errors less frustrating.
 
 	<h3>A simple example - Notation</h3>
 	<p>Let's use the proof checker to check the famous syllogism,
@@ -99,15 +100,19 @@
 
 	<p><strong>Predicates</strong> like <code>x is mortal</code>
 	are typically written as <code>mortal(x)</code> in math.
-	The following three formats are all allowed and are equivalent:
+	WeBWorK allows you to write predicates in any of the three ways:
 	<ul>
 		<li><code>x is a mortal</code>
 		<li><code>x is mortal</code>
 		<li><code>mortal(x)</code>
 	</ul>
+	<p>All three forms are equivalent. You can use whichever you
+	prefer.
 
-	<p><strong>Implications</strong> like "a man is mortal" must
-	be written as explicit implications. You can use
+
+	<p>To express a concept like "a man is a mortal", we have to
+	state it as an <strong>implication (if ... then ...)</strong>.
+	You can use
 	<code>if ... then ...</code> or <code>=&gt;</code> to create
 	implications.
 
@@ -117,7 +122,7 @@
 		<li><code>x is a man => x is a mortal</code>
 	</ul>
 
-	<p><strong>General statements</strong> like those involving the
+	<p>General statements like those involving the
 	words <strong>all</strong> or <strong>any</strong> must be stated
 	explicitly using <strong>quantifiers</strong>.
 

@@ -34,33 +34,13 @@ our $counter = 0;
 	ProofChecker('target statement as string');
 =cut
 
-# computes a similarity (between 0 and 1) of two strings
-sub _string_similarity {
-	my $a = shift;
-	my $b = shift;
-
-	my %M = ();
-	for (my $i = 0; $i <= length($a); $i++) {
-		for (my $j = 0; $j <= length($b); $j++) {
-			my $k = $i . "," . $j;
-			if ($i == 0 || $j == 0) {
-				$M{$k} = 0;
-			} else {
-				if (substr($a, $i-1, 1) eq substr($b, $j-1, 1)) {
-					$M{$k} = 1 + $M{($i-1) . "," . ($j-1)};
-				} else {
-					my $u = $M{($i-1) . "," . $j};
-					my $v = $M{$i . "," . ($j-1)};
-					if ($u < $v) {
-						$M{$k} = $v;
-					} else {
-						$M{$k} = $u;
-					}
-				}
-			}
-		}
-	}
-	return $M{length($a) . "," . length($b)} * 2 / (length($a) + length($b));
+# escape user-input to make appear as intended when output in TEXT
+sub escapeHTMLSpecial {
+	my $arg = shift;
+	$arg =~ s/&/&amp;/g;
+	$arg =~ s/</&lt;/g;
+	$arg =~ s/>/&gt;/g;
+	return $arg;
 }
 
 # Define a constructor for this class
@@ -98,6 +78,7 @@ sub new {
 		},
 		'target' => $target,
 		'givens' => [],
+		'givensText' => [],
 	}, $class;
 }
 
@@ -147,7 +128,9 @@ sub given {
 		warn("ProofChecker -> given('$exp') caused parse error: $err");
 	}
 	my $givens = $self -> {'givens'};
+	my $givensText = $self -> {'givensText'};
 	push @$givens, $statement;
+	push @$givensText, $exp;
 }
 
 ################################################################################
@@ -221,11 +204,11 @@ sub _collect_arguments {
 		my $inScopeMessage = "No statements";
 		if (scalar @thoseInScope > 1) {
 			my $last = pop @thoseInScope;
-			$inScopeMessage = "Statement numbers " . join(', ', @thoseInScope) . " and $last";
+			$inScopeMessage = "Statement numbers " . join(', ', @thoseInScope) . " or $last";
 		} elsif (scalar @thoseInScope == 1) {
 			$inScopeMessage = "Statement number " . $thoseInScope[0];
 		}
-		$inScopeMessage = "$inScopeMessage can be used to fill the inputs in line $row.";
+		$inScopeMessage = "$inScopeMessage might be used to fill the inputs in line $row.";
 
 		if (!defined($line) || !$line) {
 			return {
@@ -275,19 +258,10 @@ sub _check {
 				$correct = 0;
 				if ($reasons->[$i][0]) {
 					my $got = $reasons->[$i][0];
-					my $best = "";
-					foreach my $key (keys(%{$self->{axioms}})) {
-						if (_string_similarity($key, $got) > _string_similarity($key, $best)) {
-							$best = $key;
-						}
-					}
 					# Output message indicating invalid rule
 					$messages[$i] = "There isn't a logical rule called '" . $got  . "' available in this problem.";
-					if ($best) {
-						$messages[$i] .= " Did you mean '" . $self->{'axioms'}->{$best}->{'name'} . "'?";
-					}
 				} else {
-					$messages[$i] = "The justfication for line $line is blank. Write a justification.";
+					$messages[$i] = "The justfication for line $line is blank. Select a justification.";
 				}
 				next;
 			}
@@ -367,14 +341,14 @@ sub _check {
 
 	# Create the final summary
 	my $summary = "Problems were found with the following lines:";
+	if ($correct) {
+		$summary = "All lines so far are justified correctly.";
+	}
 	if (scalar @opens) {
 		my $lastOpen = $opens[scalar @opens - 1] + 1;
-		$summary = "You didn't close the sub-proof that was opened on line " . $lastOpen . "; all subproofs must be finished in order to finish the main proof.";
+		$summary = $summary . "<br><br>You didn't close the sub-proof that was opened on line " . $lastOpen
+			. ".<br>Make sure to use 'Conclude sub-proof' to close each sub-proof in order to finish the main proof.";
 		$correct = 0;
-	} elsif ($correct) {
-		$summary = "All lines were justified correctly.";
-	} else {
-		# (@messages are shown after $summary)
 	}
 	return (\@messages, $correct, $summary);
 }
@@ -406,7 +380,7 @@ sub show {
 	$axioms = $self -> {'axioms'};
 	my @axiomDescriptions = ();
 	while (my ($key, $axiom) = each %$axioms) {
-		if ($key ne 'given') {
+		if ($key ne 'given' && $key ne 'conclude') {
 			# Update number of columns needed
 			my @dep = @{$axiom -> {'depends'}};
 			if (scalar @dep > $cols) {
@@ -424,8 +398,6 @@ sub show {
 			}
 			if (defined($axiom->{'open'})) {
 				$row = "Begin a $row sub-proof";
-			} elsif ($key eq 'conclude') {
-				$row = "$row a sub-proof";
 			}
 
 			push @axiomDescriptions, "<li>$row</li>";
@@ -435,9 +407,9 @@ sub show {
 
 	# Render the description of the available deduction rules
 	main::TEXT('Using the provided statements and deduction rules, prove that \(' . $self->{'target'}->TeX() . '\).' . $main::BR);
-	main::TEXT("You can use the following axioms/logical deduction rules:<ul>");
+	main::TEXT("<details><summary>You can use " . (scalar @axiomDescriptions) . " deduction rules.</summary><ul>");
 	main::TEXT(join "", @axiomDescriptions);
-	main::TEXT("</ul>\n\n");
+	main::TEXT("</ul></details>\n\n");
 
 	# Output the proof table
 	main::TEXT("<table>");
@@ -450,9 +422,10 @@ sub show {
 
 	# Show givens lines
 	my $givens = $self -> {'givens'};
+	my $givensText = $self -> {'givensText'};
 	for (my $i = 0; $i < scalar @$givens; $i++) {
 		main::TEXT('<tr><th>' . ($i+1) . '.</th>');
-		main::TEXT('<td>\(' . $givens->[$i]->TeX() .'\)</td>');
+		main::TEXT('<td>' . escapeHTMLSpecial($givensText->[$i]) .'</td>');
 		main::TEXT('<td></td><td>given</td><td></td><td colspan=' . $cols . '></td>');
 		main::TEXT('</tr>');
 	}
