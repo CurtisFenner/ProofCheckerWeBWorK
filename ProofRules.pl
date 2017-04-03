@@ -240,13 +240,13 @@ our %ProofRules = (
 			my $im = $pimpliesq -> Match($implicationPattern);
 			if (!$im) {
 				my $output = 'The first argument of modus-ponens should be an implication.<br>However, \(' . $pimpliesq->TeX() . '\) was used.';
-				$output .= "<br>You cannot directly use a for-all or there-exists statement here.";
+				$output .= "<br>HINT: You cannot directly use a for-all or there-exists statement here.";
 				$output .= "<br>You should first eliminate the quantifier using Eliminate For-All or Eliminate There-Exists so that a simple implication is left.";
 				return $output;
 			}
 			if (!$im->{'p'}->Same($p)) {
 				my $output = '\(' . $p->TeX() . '\) should match the left side of \(' . $pimpliesq->TeX() . '\)';
-				$output .= "<br>You cannot directly use a for-all or there-exists statement here.";
+				$output .= "<br>HINT: You cannot directly use a for-all or there-exists statement here.";
 				$output .= "<br>You should first eliminate the quantifier using Eliminate For-All or Eliminate There-Exists so that a simple implication is left.";
 				return $output;
 			}

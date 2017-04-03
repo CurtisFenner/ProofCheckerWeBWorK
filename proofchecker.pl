@@ -61,7 +61,7 @@ sub new {
 	if (!defined($target)) {
 		warn("new ProofChecker: when parsing `$targetStr`, got parse error: $err");
 	}
-	return bless {
+	my $instance = bless {
 		'_blank_num' => 0,
 		'num_blanks' => $numBlanks,
 		'axioms' => {
@@ -82,7 +82,40 @@ sub new {
 		'target' => $target,
 		'givens' => [],
 		'givensText' => [],
+		'hints' => {},
 	}, $class;
+
+	# Fix the last line of the proof
+	$instance->hint($numBlanks, $target->Tostr());
+
+	return $instance;
+}
+
+# set a "hint" for the given line
+# line is 1, 2, 3, 4, ... (NOT zero-indexed)
+# lines DO NOT include "given" lines. (confusing... sorry... may fix)
+# lines MAY skip, leaving space for the student
+sub hint {
+	my $self = shift;
+	my $line = shift;
+	my $expression = shift;
+
+	# Check for any instructor mistakes
+	if ($line <= 0) {
+		return warn("ProofChecker->hint() expects positive line numbers, but $line was passed");
+	}
+	$line--;
+	if (defined($self->{'hints'}->{$line})) {
+		warn("a hint has already been given for $line");
+	}
+
+	# Record the hint
+	my ($f, $err) = _parse($expression);
+	if (!defined($f)) {
+		return warn("ProofChecker->hint($line, '$expression') got parse error: $err");
+	}
+
+	$self->{'hints'}->{$line} = $f;
 }
 
 # add axiom to proof checker
@@ -251,6 +284,7 @@ sub _collect_arguments {
 			return {problem => $line . " is not in the scope of line $row.<br>$inScopeMessage"};
 		}
 		if (! $statements -> [$index] -> {'inScope'}) {
+			# TODO: update message for "in scope" lines that are just not justified properly
 			return {problem => "line $line is no longer in scope and can't be referenced from row $row.<br>$inScopeMessage"};
 		}
 		if (! defined($statements -> [$index])) {
@@ -416,7 +450,6 @@ sub show {
 				$cols = scalar @dep;
 			}
 
-
 			# Build the description of the rule
 			my $row = "<strong>" . $axiom -> {'name'} . "</strong>";
 			if (scalar @dep) {
@@ -476,11 +509,11 @@ sub show {
 	for (my $i = 0; $i < $self->{'num_blanks'}; $i++) {
 		main::TEXT('<tr><th>' . ($i+1+$offset) . '.</th>');
 		main::TEXT('<td>');
-		if ($i+1 == $self->{'num_blanks'}) {
-			# the final statement blank
-			push @statementBlanks, $self->_show_fixed(30, $self->{'target'}->Tostr());
+		if (defined($self->{'hints'}->{$i})) {
+			# the statement is a hint from the instructor
+			push @statementBlanks, $self->_show_fixed(30, $self->{'hints'}->{$i}->Tostr());
 		} else {
-			# the earlier statement blanks
+			# the statement is blank for the student to use
 			push @statementBlanks, $self->_show_blank(30);
 		}
 		main::TEXT('</td>');
@@ -560,7 +593,8 @@ sub show {
 					$statements[$i] = $f;
 				}
 			} else {
-				warn("no answer for $i");
+				# The line was left blank
+				# (this is perfectly OK; students can skip lines)
 				$problems{$i} = "";
 			}
 			$i++;
