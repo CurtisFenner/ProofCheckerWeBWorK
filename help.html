@@ -21,6 +21,10 @@
 		font-size: 115%;
 	}
 
+	del code {
+		display: initial;
+	}
+
 	h1 {
 		font-size: 200%;
 	}
@@ -30,6 +34,17 @@
 	h3 {
 		font-size: 160%;
 	}
+
+	.starred {
+		position: relative;
+	}
+
+	.starred::before {
+		position: absolute;
+		left: -2em;
+		content: "\2605";
+	}
+
 	</style>
 </head>
 <body>
@@ -82,10 +97,10 @@
 	on paper</strong>. Once you have the basic outline planned on paper,
 	then <strong>try to enter the proof one line at a time</strong>.
 
-	<p>You can <strong>click "Preview My Answers" at any time to get
+	<p class=starred>You can <strong>click "Preview My Answers" at any time to get
 	feedback on the proof you've written so far</strong>. Getting your
 	proof accepted one line at a time will make fixing typos and logic
-	errors less frustrating.
+	errors less frustrating.</p>
 
 	<h3>A simple example - Notation</h3>
 	<p>Let's use the proof checker to check the famous syllogism,
@@ -113,12 +128,12 @@
 	<p>To express a concept like "a man is a mortal", we have to
 	state it as an <strong>implication (if ... then ...)</strong>.
 	You can use
-	<code>if ... then ...</code> or <code>=&gt;</code> to create
+	<del><code>if ... then ...</code> or</del> <code>=&gt;</code> to create
 	implications.
 
 	<p>For example, "a man is a mortal" might be written as either
 	<ul>
-		<li><code>if x is a man then x is a mortal</code>
+		<li><del><code>if x is a man then x is a mortal</code></del>
 		<li><code>x is a man => x is a mortal</code>
 	</ul>
 
@@ -126,22 +141,23 @@
 	words <strong>all</strong> or <strong>any</strong> must be stated
 	explicitly using <strong>quantifiers</strong>.
 
-	<p>Quantifiers can be written like predicates; they can also be
-	written without <code>()</code>.
+	<p>Quantifiers can be written like predicates; <del>they can also be
+	written without <code>()</code></del>.
 
 	<p>For example,
 	"everyone loves icecream" might be written as any of the following:
 	<ul>
 		<li><code>forall(x, loves(x, icecream))</code>
 		<li><code>all(x, loves(x, icecream))</code>
-		<li><code>forall x loves(x, icecream)</code>
-		<li><code>all x loves(x, icecream)</code>
+		<li><del><code>forall x loves(x, icecream)</code></del>
+		<li><del><code>all x loves(x, icecream)</code></del>
 	</ul>
 
 	<h3>A simple example - WeBWorK</h3>
 
 	<p>Here is how the problem would be presented to you in WeBWorK.
-	(This is the first exercise assigned to you; you can follow along!)
+	<p class=starred>This is the first exercise assigned to you;
+		you can follow along!</p>
 
 	<p><img src="blank-syllogism.png" alt="a simple syllogism in webwork">
 
@@ -153,20 +169,31 @@
 	together to conclude <code>B</code> is called
 	<strong>modus ponens</strong>.
 
-	<p>First, try entering <code>Socrates is mortal</code>.
-	Click "Preview My Answers" to see what WeBWorK has to say about that.
+	<p>The conclusion, <code>Socrates is mortal</code> is already entered
+	for you in line 4.
+
+	<p class=starred>Click "Preview My Answers" to see what WeBWorK
+	wants you to do.
 
 	<p><img src="no-reason-syllogism.png">
 	<p>WeBWorK will tell you that you need to include a justification for
-	the line you just added. Pick <em>modus&nbsp;ponens</em> from the
-	dropdown.
+	each line in the proof.
+
+	<p class=starred>Try using <em>modus&nbsp;ponens</em> from the dropdown as the
+	justification for line 4.
 
 	<p><img src="refers-syllogism.png">
 	<p>WeBWorK asks you to tell it what previous lines this new line is
-	referring to. In this case, we want column &#9398; to refer to line 1
-	and column &#9399; to refer to line 2. You can look at either the error
-	message or the list of deduction rules to see what is expected for each
-	column.
+	referring to.
+
+	<p>Modus Ponens requires an implication <code>P => Q</code>
+	for the &#9398; column. A statement similar to 1 might work.
+
+ 	<p>Modus Ponens also needs the corresponding <code>P</code> statement.
+	Line 2 might work in this case.
+
+	<p class=starred>Try entering 1 for &#9398; and 2 for &#9399; in justification
+	for the 4th line.
 
 	<p><img src="eliminate-syllogism.png">
 	<p>WeBWorK rejects this attempt because line 1 is actually a
@@ -176,14 +203,21 @@
 	<p><strong>Sorry, but the computer is pedantic.</strong> We need to get
 	a statement that looks <strong>exactly</strong> like
 	<code>man(Socrates) => mortal(Socrates)</code> in order to use it with
-	<code>man(Socrates)</code>.
+	<code>man(Socrates)</code>. The extra <code>forall x, ...</code> gets
+	in the way of modus-ponens.
 
-	<p>We can <em>conclude</em> such a statement from line 1 using the
+	<p>We can <em>conclude</em> the bare implication
+	<code>Socrates is man => Socrates is mortal</code>
+	<em>using line 1</em> by the
 	<em>Eliminate a For-All</em> deduction rule.
 
-	<p><img src="eliminated-syllogism.png">
+	<p>This conclusion can go into the blanks on line 3.
 
-	<p>Finally, modus-ponens can be used to reach the conclusion.
+	<p class=starred>Use the "Eliminate a For-All" deduction rule on line 1 to justify
+	<code>Socrates is man => Socrates is mortal</code> on line 3.
+
+	<p class=starred>Make sure to fix the modus-ponens line to refer to the
+	correct previous lines. WeBWorK error messages will give hints.
 
 	<p><img src="correct-syllogism.png">
 
