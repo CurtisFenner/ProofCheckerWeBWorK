@@ -377,7 +377,7 @@ sub fixExpression {
 		}
 
 		# Verify the function base is not a fixed constant (like a number)
-		if (IsFixedConstant($base->{'value'})) {
+		if ($base->{'type'} eq 'constant' && IsFixedConstant($base->{'value'})) {
 			return undef, "A constant like '" . $base->{'value'} . "' cannot be used as a function/predicate.";
 		}
 
@@ -390,7 +390,7 @@ sub fixExpression {
 			if ($variable->{'type'} ne 'constant' && $variable->{'type'} ne 'pattern') {
 				return undef, "The quantifier " . $base->{'value'} . " requires the variable be a simple name like 'x', not a " . $variable->{'type'} . " expression.";
 			}
-			if (IsFixedConstant($variable->{'value'})) {
+			if ($variable->{'type'} eq 'constant' && IsFixedConstant($variable->{'value'})) {
 				return undef, "The quantifier " . $base->{'value'} . " requires a variable name, and not a fixed constant like " . $variable->{'value'} . ".";
 			}
 		}
