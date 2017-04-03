@@ -276,7 +276,11 @@ sub parseRPN {
 	}
 
 	if (scalar @stack > 1) {
-		return undef, "unexpected value '" . $stack[1] . "'";
+		my $problem = " '" . $stack[1] . "'";
+		if (ref($stack[1]) ne '') {
+			$problem = "";
+		}
+		return undef, "unexpected value" . $problem . "; did you forget a comma or operator?";
 	}
 	return $stack[0], undef;
 }
