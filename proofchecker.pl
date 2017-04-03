@@ -190,7 +190,7 @@ sub _show_fixed {
 	$value = main::encode_pg_and_html($value);
 
 	# TODO: deal with the fact that this is HTML only
-	main::TEXT(qq!<INPUT disabled TYPE=TEXT CLASS="codeshard" SIZE=$col NAME = "$name" id="$name" aria-label="$label" VALUE = "$value">!);
+	main::TEXT(qq!<INPUT readonly TYPE=TEXT CLASS="codeshard" SIZE=$col NAME = "$name" id="$name" aria-label="$label" VALUE = "$value">!);
 
 	return $name;
 }
@@ -436,9 +436,11 @@ sub show {
 
 	# Render the description of the available deduction rules
 	main::TEXT('Using the provided statements and deduction rules, prove that \(' . $self->{'target'}->TeX() . '\).' . $main::BR);
+	main::TEXT('You do <em>not</em> need to use all of the blanks.' . $main::BR);
 	main::TEXT("<details><summary>You can use " . (scalar @axiomDescriptions) . " deduction rules.</summary><ul>");
 	main::TEXT(join "", @axiomDescriptions);
 	main::TEXT("</ul></details>\n\n");
+	main::TEXT("$main::BR $main::BR");
 
 	# Output the proof table
 	main::TEXT("<table>");
@@ -474,7 +476,13 @@ sub show {
 	for (my $i = 0; $i < $self->{'num_blanks'}; $i++) {
 		main::TEXT('<tr><th>' . ($i+1+$offset) . '.</th>');
 		main::TEXT('<td>');
-		push @statementBlanks, $self->_show_blank(30);
+		if ($i+1 == $self->{'num_blanks'}) {
+			# the final statement blank
+			push @statementBlanks, $self->_show_fixed(30, $self->{'target'}->Tostr());
+		} else {
+			# the earlier statement blanks
+			push @statementBlanks, $self->_show_blank(30);
+		}
 		main::TEXT('</td>');
 		main::TEXT('<td>by</td>');
 		main::TEXT('<td>');
@@ -525,7 +533,7 @@ sub show {
 	main::TEXT('</table>');
 
 	# Create answer checking subroutine:
-	$evaluator = sub {
+	my $evaluator = sub {
 		my $text = "";
 		my @statements = ();
 		my %problems = (); # Which statements had problems
@@ -552,6 +560,7 @@ sub show {
 					$statements[$i] = $f;
 				}
 			} else {
+				warn("no answer for $i");
 				$problems{$i} = "";
 			}
 			$i++;
@@ -563,7 +572,7 @@ sub show {
 		for (my $i = 0; $i < scalar @reasonBlanks; $i++) {
 			my $reason = _normalize_reason($self -> _get_blank($reasonBlanks[$i]));
 			if ($reason eq 'given') {
-				$problems{$i + $offset} = "student cannot use 'given' as justification";
+				$problems{$i + $offset} = "You cannot use 'given' as justification!";
 				$cheating = 1;
 			}
 			my @just = ($reason);
