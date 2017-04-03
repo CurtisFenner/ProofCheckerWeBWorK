@@ -116,9 +116,9 @@ sub _tex {
 		}
 
 		# Display as function
-		my $arg = _tex($tree->{'arguments'}, 10000);
-		if (substr($arg, 0, 1) ne '(') {
-			$arg = '(' . $arg . ')';
+		my $arg = _tex($tree->{'arguments'}, -10000);
+		if ($tree->{'arguments'}->{'type'} ne 'tuple') {
+			$arg = "($arg)";
 		}
 		return $base . ' ' . $arg;
 	}
@@ -209,7 +209,12 @@ sub _tostr {
 	} elsif ($type eq 'function') {
 		# Careful: I assume the {function} is unparenthesized,
 		# because that's currently an assumption of the parser
-		return _tostr($tree->{'function'}) . '(' . _tostr($tree->{'arguments'}, "$cause {arguments}") . ')';
+		my $base = _tostr($tree->{'function'});
+		my $args = _tostr($tree->{'arguments'}, "$cause {arguments}");
+		if ($tree->{'arguments'}->{'type'} ne 'tuple') {
+			$args = "($args)";
+		}
+		return $base . $args;
 	}
 
 	warn("unrecognized expression type '$type'");
