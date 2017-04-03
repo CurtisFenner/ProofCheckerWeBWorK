@@ -27,8 +27,8 @@ loadMacros("dropdown.pl");
 
 package ProofChecker; # define proof checker type
 
-our $answerPrefix = "proofChecker_"; # answer rule prefix
-our $counter = 0;
+our $PROOF_ANSWER_PREFIX = "proofChecker_"; # answer rule prefix
+our $UNIQUE_COUNTER = 0;
 
 =head1 CONSTRUCTOR
 	ProofChecker('target statement as string');
@@ -36,6 +36,9 @@ our $counter = 0;
 
 # escape user-input to make appear as intended when output in TEXT
 sub escapeHTMLSpecial {
+	# TODO: replace this with
+	# https://github.com/openwebwork/pg/blob/82d00b0f68e33d32b9c5f2bb4216a00be23dd99d/lib/PGcore.pm
+	# encode_pg_and_html
 	my $arg = shift;
 	$arg =~ s/&/&amp;/g;
 	$arg =~ s/</&lt;/g;
@@ -152,8 +155,10 @@ sub _parse {
 sub _show_blank {
 	my $self = shift;
 	my $width = shift;
-	$name = $answerPrefix . $counter;
-	$counter++;
+
+	my $name = $PROOF_ANSWER_PREFIX . $UNIQUE_COUNTER;
+	$UNIQUE_COUNTER++;
+
 	if ($self -> {'_blank_num'} > 0) {
 		# this is not the first blank
 		main::TEXT(main::NAMED_ANS_RULE_EXTENSION($name, $width));
@@ -162,7 +167,31 @@ sub _show_blank {
 		main::TEXT(main::NAMED_ANS_RULE($name, $width));
 		$self -> {'_primary_blank'} = $name;
 	}
+
+	# indicate the "first" blank (the "real" one) has already been made
 	$self->{'_blank_num'}++;
+	return $name;
+}
+
+sub _show_fixed {
+	my $self = shift;
+	my $col = shift;
+	my $value = shift;
+
+	my $name = $PROOF_ANSWER_PREFIX . $UNIQUE_COUNTER;
+	$UNIQUE_COUNTER++;
+
+	# INLINED FROM NAMED_ANS_RULE_EXTENSION FROM HERE:
+	# https://github.com/openwebwork/pg/blob/47583ef5bd22005916db8a050a4dcaf1c6d3d643/macros/PGbasicmacros.pl
+
+	my $label = main::generate_aria_label($name);
+
+	# Sanitize the value to render as provided *text*
+	$value = main::encode_pg_and_html($value);
+
+	# TODO: deal with the fact that this is HTML only
+	main::TEXT(qq!<INPUT disabled TYPE=TEXT CLASS="codeshard" SIZE=$col NAME = "$name" id="$name" aria-label="$label" VALUE = "$value">!);
+
 	return $name;
 }
 
@@ -425,8 +454,17 @@ sub show {
 	my $givensText = $self -> {'givensText'};
 	for (my $i = 0; $i < scalar @$givens; $i++) {
 		main::TEXT('<tr><th>' . ($i+1) . '.</th>');
-		main::TEXT('<td>' . escapeHTMLSpecial($givensText->[$i]) .'</td>');
-		main::TEXT('<td></td><td>given</td><td></td><td colspan=' . $cols . '></td>');
+
+		# Show given statement
+		main::TEXT('<td>');
+		$self->_show_fixed(30, $givensText->[$i]);
+		main::TEXT('</td>');
+
+		# Show given justification
+		main::TEXT('<td></td><td>given</td><td></td>');
+
+		# Show blank area for "reference" columns
+		main::TEXT('<td colspan=' . $cols . '></td>');
 		main::TEXT('</tr>');
 	}
 
