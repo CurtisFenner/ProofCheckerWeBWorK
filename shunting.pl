@@ -48,6 +48,8 @@ my %aliases = (
 	'exists' => 'exists',
 );
 
+# RETURNS whether or not (as a LaTeX string)
+# the argument is a quantifier function base.
 sub Quantifier {
 	my $arg = shift;
 	if ($arg eq 'forall') {
@@ -74,6 +76,26 @@ my %precedence = (
 	'&' => -1,
 	'=>' => -2,
 );
+
+# RETURNS whether or not the argument is the name of a 'fixed constant'
+# such as 3.7, pi, -15.
+sub IsFixedConstant {
+	my $name = shift;
+	my $without = $name . '';
+	$without =~ s/^\-?\.?[0-9]+//;
+	if ($name ne $without) {
+		# Numbers are fixed constants
+		return 1;
+	}
+
+	if ($name eq 'pi' || $name eq 'PI' || $name eq 'Pi') {
+		# Significant constants
+		return 1;
+	}
+
+	# Everything else is a normal name
+	return 0;
+}
 
 sub Precedence {
 	my $op = shift;
@@ -348,16 +370,32 @@ sub fixExpression {
 	} elsif ($type eq 'function') {
 		my $base = $e->{'function'};
 
-
 		# Verify that the function/predicate is a name and not something else
 		if ($base->{'type'} ne 'constant' && $base->{'type'} ne 'pattern') {
 			warn("<h1>base: " . explain($base) . "</h1>");
 			return undef, 'Functions and predicates must be names, not ' . $base->{'type'} . ' expressions.';
 		}
 
+		# Verify the function base is not a fixed constant (like a number)
+		if (IsFixedConstant($base->{'value'})) {
+			return undef, "A constant like '" . $base->{'value'} . "' cannot be used as a function/predicate.";
+		}
+
+		# Verify the variable of a quantifier is a constant
+		if (Quantifier($base->{'value'})) {
+			if ($e->{'arguments'}->{'type'} ne 'tuple') {
+				return undef, "The quantifier " . $base->{'value'} . " requires at least two things: the variable, and the statement about the variable.";
+			}
+			my $variable = $e->{'arguments'}->{'0'};
+			if ($variable->{'type'} ne 'constant' && $variable->{'type'} ne 'pattern') {
+				return undef, "The quantifier " . $base->{'value'} . " requires the variable be a simple name like 'x', not a " . $variable->{'type'} . " expression.";
+			}
+			if (IsFixedConstant($variable->{'value'})) {
+				return undef, "The quantifier " . $base->{'value'} . " requires a variable name, and not a fixed constant like " . $variable->{'value'} . ".";
+			}
+		}
+
 		# TODO: validate quantifier variables
-		# 1) not complex statements (2x)
-		# 2) not constants (numbers, pi, e)
 		# 3) not in scope: `x and forall(x, P(x))`
 
 		# Recursively check expression
