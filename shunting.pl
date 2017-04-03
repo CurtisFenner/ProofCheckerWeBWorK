@@ -43,6 +43,9 @@ my %aliases = (
 
 	'all' => 'forall',
 	'exist' => 'exists',
+
+	'forall' => 'forall',
+	'exists' => 'exists',
 );
 
 sub Quantifier {
@@ -65,6 +68,9 @@ my %precedence = (
 	'-' => 2,
 
 	'=' => 0.1,
+
+	'is' => -0.5,
+
 	'&' => -1,
 	'=>' => -2,
 );
@@ -285,6 +291,121 @@ sub parseRPN {
 	return $stack[0], undef;
 }
 
+# for debugging
+# $e: a reference or scalar
+# RETURNS: a string representation of $e
+sub explain {
+	my $e = shift;
+	if (!ref($e)) {
+		return "'$e'";
+	} elsif (ref($e) eq 'HASH') {
+		my $out = '{';
+		while (my ($k, $v) = each %$e) {
+			$out .= explain($k) . ' => ' . explain($v) . ',';
+		}
+		return $out . '}';
+	}
+	return "[" . ref($e) . "]";
+}
+
+# "fixes" an expression, reported errors with certain invalid constructs
+# RETURNS (expression, error message)
+sub fixExpression {
+	my $e = shift;
+
+	my $type = $e->{'type'};
+	if (!defined($type)) {
+		main::TEXT("<h1>" . explain($e) . "</h1>");
+	}
+
+	if ($type eq 'binary') {
+		my $op = $e->{'op'};
+
+		if ($op eq 'is') {
+			return fixExpression({
+				'type' => 'function',
+				'arguments' => $e->{'left'},
+				'function' => $e->{'right'},
+			});
+		}
+
+		my ($newLeft, $err) = fixExpression($e->{'left'});
+		if (!defined($newLeft)) {
+			return undef, $err;
+		}
+
+		my ($newRight, $err) = fixExpression($e->{'right'});
+		if (!defined($newRight)) {
+			return undef, $err;
+		}
+
+		return {
+			'type' => 'binary',
+			'op' => $op,
+			'left' => $newLeft,
+			'right' => $newRight,
+		}, undef;
+	} elsif ($type eq 'function') {
+		my $base = $e->{'function'};
+
+
+		# Verify that the function/predicate is a name and not something else
+		if ($base->{'type'} ne 'constant' && $base->{'type'} ne 'pattern') {
+			warn("<h1>base: " . explain($base) . "</h1>");
+			return undef, 'Functions and predicates must be names, not ' . $base->{'type'} . ' expressions.';
+		}
+
+		# TODO: validate quantifier variables
+		# 1) not complex statements (2x)
+		# 2) not constants (numbers, pi, e)
+		# 3) not in scope: `x and forall(x, P(x))`
+
+		# Recursively check expression
+		my ($newFunction, $err) = fixExpression($base);
+		if (!defined($newFunction)) {
+			return undef, $err;
+		}
+		my ($newArgs, $err) = fixExpression($e -> {'arguments'});
+		if (!defined($newArgs)) {
+			return undef, $err;
+		}
+		return {
+			'type' => 'function',
+			'function' => $newFunction,
+			'arguments' => $newArgs,
+		}, undef;
+	} elsif ($type eq 'constant' || $type eq 'pattern') {
+		# a constant cannot be invalid (I think?)
+		return $e, undef;
+	} elsif ($type eq 'tuple') {
+		my $out = {
+			'type' => 'tuple',
+			'count' => $e->{'count'},
+		};
+		for (my $i = 0; $i < $e->{'count'}; $i++) {
+			my ($f, $err) = fixExpression($e->{$i});
+			if (!defined($f)) {
+				return undef, $err;
+			}
+			$out->{$i} = $f;
+		}
+		return $out, undef;
+	} elsif ($type eq 'unary') {
+		my ($newArg, $err) = fixExpression($e->{'argument'});
+		if (!defined($newArg)) {
+			return undef, $err;
+		}
+
+		return {
+			'type' => 'unary',
+			'argument' => $neArg,
+		}, undef;
+	}
+
+	warn("unhandled expression of type $type in shunting.pl::fixExpression");
+	return $e, undef;
+}
+
 # An Expression has a {type}
 #     type => pattern: has a {name} which is a string
 #     type => constant: has a {value} which is a string
@@ -311,7 +432,11 @@ sub parse {
 	if (!defined($tokens)) {
 		return undef, $err;
 	}
-	return parseRPN($tokens);
+	my ($f, $err) = parseRPN($tokens);
+	if (!defined($f)) {
+		return undef, $err;
+	}
+	return fixExpression($f);
 }
 
 # use Data::Dumper;
