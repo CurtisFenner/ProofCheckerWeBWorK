@@ -35,6 +35,13 @@
 		font-size: 160%;
 	}
 
+	hr {
+		border: none;
+		border-top: 1px solid #AAA;
+		height: 0;
+		margin-bottom: 12em;
+	}
+
 	.starred {
 		position: relative;
 	}
@@ -45,10 +52,19 @@
 		content: "\2605";
 	}
 
+	.indent {
+		padding-left: 2em;
+	}
+
+	.incorrect {
+		border: 2px solid #F88;
+	}
+
 	</style>
 </head>
 <body>
 	<h1>Proof Questions - Overview</h1>
+
 	<p>A <strong>proof question</strong> on WeBWorK asks you to formally
 	show that some statement is true.
 
@@ -92,7 +108,9 @@
 	with more parentheses might be helpful if WeBWorK is having
 	trouble understanding you.
 
-	<h2>Solving and Filling-Out Proof Problems</h2>
+	<hr>
+	<h2>Simple Proof Problems</h2>
+
 	<p>It is probably easiest to <strong>first sketch the solution out
 	on paper</strong>. Once you have the basic outline planned on paper,
 	then <strong>try to enter the proof one line at a time</strong>.
@@ -103,6 +121,7 @@
 	errors less frustrating.</p>
 
 	<h3>A simple example - Notation</h3>
+
 	<p>Let's use the proof checker to check the famous syllogism,
 
 	<blockquote>
@@ -232,4 +251,98 @@
 	Taking smaller steps can help you avoid logical fallacies and
 	other pitfalls that WeBWorK will reject. However, writing proofs
 	in this way is not easy.
+
+	<hr>
+	<h2>Suproofs Example</h2>
+
+	<p>Sometimes in proofs we need something that looks like this:
+
+	<blockquote>
+		<strong>Suppose that p/q = &radic;2 and p is not divisible by q.</strong><br>
+		<div class=indent>
+			Then, p<sup>2</sup>/q<sup>2</sup> = 2.<br>
+			Thus p<sup>2</sup> = 2q<sup>2</sup>.<br>
+			So, p<sup>2</sup> is divisible by 2, so p is divisible by 2.<br>
+			Also, q<sup>2</sup> is divisible by 2, so q is divisble by 2.
+		</div>
+		<strong>This is a contradiction; therefore &radic;2 must be irrational.</strong>
+	</blockquote>
+
+	<p>We begin by supposing something that is not (necessarily) true,
+	and then use that supposition to conclude other facts.
+
+	<p>You cannot <em>directly</em> use the facts you simply "suppose" to
+	be true to finish your proof. For example, this obviously
+	<strong>incorrect</strong> proof:
+
+	<blockquote class=incorrect>
+		<strong>Suppose that p/q = &radic;2 and p is not divisible by q.</strong><br>
+		<div class=indent>
+		</div>
+		<strong>Therefore, since p/q=&radic;2, &radic;2 must be rational.</strong>
+	</blockquote>
+
+	<p>You can introduce a new <strong>claim</strong> or
+	<strong>supposition</strong>, and <strong>conclude</strong> from that
+	a limited number of statements. You can only use the claim while
+	writing the <strong>sub</strong>proof.
+
+	<p>This is useful in order to create proofs that look like the following,
+	which introduces a <code>P => Q</code> statement:
+
+	<blockquote>
+		Suppose it rained this morning.<br>
+		<div class=indent>
+			Since when it rains, the grass is wet; thus the grass is wet now<br>
+		</div>
+		Therefore, <em>if it rained this morning, then the grass is wet.</em>
+	</blockquote>
+
+	<p>The above, written slightly more carefuly, looks like:
+
+	<blockquote>
+		<strong>Suppose</strong> <code>rained(today)</code>.
+		<div class=indent>
+			Thus <code>grasswet(today)</code>.
+		</div>
+		<strong>Therefore</strong>, <code>rained(today) => grasswet(today)</code>.
+	</blockquote>
+
+	<h3>Subproofs example - There Exists</h3>
+
+	<p class=starred>This section corresponds to the second tutorial
+		WeBWorK problem.
+
+	<p>In WeBWorK, subproofs can also be used to eliminate
+	"there exists" quantifiers, by giving a <em>name</em> to the
+	thing that exists:
+
+	<blockquote>
+		1. <code>forall n, P(n) => Q(n)</code>.<br>
+		2. <code>exists x, P(x)</code>.<br>
+		3. <strong>Suppose</strong> that "x" is called <code>bob</code>, i.e., <code>P(bob)</code>.
+		<div class=indent>
+			4. <code>P(bob) => Q(bob)</code> from (1.).<br>
+			5. <code>Q(bob)</code> from (3.) and (4.).<br>
+			6. <code>exists x, Q(x)</code> from (5.).<br>
+		</div>
+		7. <strong>Conclude</strong> <code>exists x, Q(x)</code>.
+	</blockquote>
+
+	<p>Note the unfortunate redundancy between lines (6.) and (7.).
+	<p>Statement (6.) is deduced from statement (5.), which is
+	still part of the subproof. Therefore (6.) must be part of the
+	subproof.
+	<p>However, we ultimately want to conclude (7.), so we must
+	move it to be the <em>conclusion</em> of the subproof as well.
+
+	<p class=starred>WeBWorK requires you to explain <em>what kind</em> of subproof
+	you are writing. The above example <em>eliminates a "there exists"</em>,
+	so you should use "begin Eliminate a There-Exists Subproof".
+
+	<p><img src="subproof-outline.png"
+		alt="P(bob) from 'begin eliminate there-exists sub-proof; conclude sub-proof with exists(x, Q(x))">
+
+	<p class=starred>The above is how you might begin the problem. Use the
+	hints from WeBWorK and this section to finish this subproof problem.
 </body>

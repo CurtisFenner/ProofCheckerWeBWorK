@@ -285,7 +285,7 @@ sub _collect_arguments {
 		}
 		if (! $statements -> [$index] -> {'inScope'}) {
 			# TODO: update message for "in scope" lines that are just not justified properly
-			return {problem => "line $line is no longer in scope and can't be referenced from row $row.<br>$inScopeMessage"};
+			return {problem => "line $line is not in scope; it can't be referenced from row $row.<br>$inScopeMessage"};
 		}
 		if (! defined($statements -> [$index])) {
 			return {problem => "statement $line is invalid<br>.Fix line $line before referring to it."};

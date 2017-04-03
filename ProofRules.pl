@@ -104,12 +104,13 @@ our %ProofRules = (
 			my @scope = @$scope_ref;
 
 			if ($line -> Contains($opening -> {'var'})) {
-				return "Conclusion must not use variable " . $opening->{'var'};
+				return "The conclusion of an 'eliminate there-exists subproof' must not use the name \$" . $opening->{'var'}->TeX() . "\$ used in the claim.";
 			}
 
 			my $top = $scope[(scalar @scope) - 1];
 			if (!($top -> Same($line))) {
-				return "Conclusion must match previous line";
+				return "The conclusion of an 'eliminate there-exists subproof' must have been proven already in the subproof (on the previous line)."
+					. "<br>However, \\( " . $line->TeX() . " \\) was not proven in this subproof.";
 			}
 			return 0;
 		},
@@ -117,7 +118,7 @@ our %ProofRules = (
 ########################################################################################################################
 	"existential_introduction" => {
 		name => 'Create a There-Exists',
-		depends => ['statement'],
+		depends => ['statement you want to quantify'],
 		test => sub {
 			my $line = shift; # exists(x, P(x))
 			my $stat = shift; # P(c)
@@ -129,7 +130,8 @@ our %ProofRules = (
 			}
 			my $instantiationPattern = $em -> {'predicate'} -> Replace($em -> {'variable'}, E('@v'));
 			if (! $stat->Match($instantiationPattern) ) {
-				return $stat . " cannot be generalized as " . $line;
+				return '\(' . $stat->TeX() . '\) cannot be generalized as \(' . $line->TeX() . '\).<br>'
+					. 'To conclude \(' . $line->TeX() . '\), you must use a statement that looks like \(' . $em->{'predicate'}->Replace($em->{'variable'}, E('u'))->TeX() . '\)';
 			}
 			return 0;
 		},
