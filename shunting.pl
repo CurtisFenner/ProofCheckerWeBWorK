@@ -35,6 +35,7 @@ sub _tokenize {
 	return \@tokens, undef;
 }
 
+# all keywords MUST be lowercase
 my %aliases = (
 	'and' => '&',
 	'^' => '&',
@@ -46,6 +47,8 @@ my %aliases = (
 
 	'forall' => 'forall',
 	'exists' => 'exists',
+
+	'is' => 'is',
 );
 
 # RETURNS whether or not (as a LaTeX string)
@@ -108,14 +111,17 @@ sub Precedence {
 sub shunting {
 	my $str = shift;
 
+	# Lex string into tokens
 	my ($rawtokens, $err) = _tokenize($str);
 	if (!defined($rawtokens)) {
 		return undef, $err;
 	}
 
+	# Normalize tokens
 	for (my $i = 0; $i < scalar @$rawtokens; $i++) {
-		if (defined($aliases{$rawtokens->[$i]})) {
-			$rawtokens->[$i] = $aliases{$rawtokens->[$i]};
+		my $normalized = $aliases{lc($rawtokens->[$i])};
+		if (defined($normalized)) {
+			$rawtokens->[$i] = $normalized;
 		}
 	}
 
