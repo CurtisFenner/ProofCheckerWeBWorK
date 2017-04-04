@@ -34,6 +34,10 @@
 	h3 {
 		font-size: 160%;
 	}
+	h4 {
+		padding: 0;
+		margin: 0;
+	}
 
 	hr {
 		border: none;
@@ -345,4 +349,34 @@
 
 	<p class=starred>The above is how you might begin the problem. Use the
 	hints from WeBWorK and this section to finish this subproof problem.
+
+
+	<hr>
+
+	<h2>Symbols and Syntax Reference</h2>
+
+	<h3>and, conjunction</h3>
+	<h4>How to type and/conjunction statements</h4>
+	<p><code>a and b</code> or <code>a &amp; b</code> or <code>a ^ b</code>. Use your favorite!
+	<h4>How to deduce and/conjunction statements</h4>
+	<p>Use "Create an And". Statements <code>A</code> and <code>B</code> can be used to deduce <code>A &amp; B</code>
+	<h4>How to use an and/conjunction statement</h4>
+	<p>Use "Eliminate an And". The statement <code>A &amp; B</code> can be used to deduce either <code>A</code> or <code>B</code>.
+
+	<h3>for all, all, every, &forall;</h3>
+	<h4>How to type all/for all/every/&forall; statements</h4>
+	<p>You can write "&forall;x P(x)" as <code>forall(x, P(x))</code> or <code>all(x, P(x))</code>.
+	<h4>How to deduce all/for all/every/&forall; statements</h4>
+	<p>If you have a "general" statement, like <code>P(x)</code>
+		and <code>x</code> is a "free" variable, you can conclude <code>all(x, P(x))</code>.
+		A variable is <em>not</em> free if it's used in a claim or a given statement.
+	<p>Usually, "eliminate a for-all statement" can be used to create free variables.
+	<h4>How to use a all/for all/every&forall; statement</h4>
+	<p>If you have a statement like <code>all(x, P(x, x))</code> you can use
+		"Eliminate a For-All" to conclude any statement of the form
+		<code>P(__, __)</code>, for example, <code>P(u, u)</code> or <code>P(3, 3)</code>.
+
+	<h3>exists, there is, &exist;</h3>
+	<h4>How to type exists/there is/&exist;</h4>
+	<p>You can write "&exist;x P(x)" as <code>thereis(x, P(x))</code> or <code>exists(x, P(x))</code> or <code>exist(x, P(x))</code>.
 </body>
