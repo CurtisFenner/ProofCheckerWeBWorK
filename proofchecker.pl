@@ -469,6 +469,8 @@ sub show {
 
 	# Render the description of the available deduction rules
 	main::TEXT("<hr>\n");
+	main::TEXT("<b><a href='http://www.curtisfenner.com/ProofCheckerWeBWorK/help.html'>Click here for an explanation of how to do proof questions on WeBWorK</a></b>");
+	main::TEXT("<hr>\n");
 	main::TEXT('Using the provided statements and deduction rules, prove that \(' . $self->{'target'}->TeX() . '\).' . $main::BR);
 	main::TEXT('You do <em>not</em> need to use all of the blanks.' . $main::BR);
 	main::TEXT("<details><summary>You can use " . (scalar @axiomDescriptions) . " deduction rules.</summary><ul>");

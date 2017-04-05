@@ -86,7 +86,7 @@ sub _tex {
 		return $out;
 	} elsif ($type eq 'unary') {
 		my $myP = proofparsing::Precedence('u' . $tree->{'op'});
-		my $out = $op . ' ' . _tex($tree->{'argument'}, $myP);
+		my $out = $tree->{'op'} . ' ' . _tex($tree->{'argument'}, $myP);
 		if ($conP > $myP) {
 			return '(' . $out . ')';
 		}

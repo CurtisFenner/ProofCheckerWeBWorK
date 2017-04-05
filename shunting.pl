@@ -65,7 +65,7 @@ sub Quantifier {
 
 my %precedence = (
 	'$' => 9999999999,
-	'-u' => 100,
+	'u-' => 100,
 	'^' => 5,
 	'*' => 4,
 	'/' => 4,
@@ -131,7 +131,7 @@ sub shunting {
 	}
 
 	my %right = (
-		'-u' => 1,
+		'u-' => 1,
 		'^' => 1,
 	);
 
@@ -142,8 +142,8 @@ sub shunting {
 		if ($token eq '(' && !exists($precedence{$previous}) && $previous ne '(' && $previous ne ',') {
 			push @tokens, '$';
 			push @tokens, '(';
-		} elsif (exists($precedence{$token . 'u'}) && ($i == 0 || $previous eq "(" || exists($precedence{$previous}))) {
-			push @tokens, $token . 'u';
+		} elsif (exists($precedence{'u' . $token}) && ( $previous eq "(" || exists($precedence{$previous}))) {
+			push @tokens, 'u' . $token;
 		} else {
 			push @tokens, $token;
 		}
@@ -287,14 +287,14 @@ sub parseRPN {
 			if (substr($action, 0, 1) eq 'u') {
 				# Unary operator
 				if (scalar @stack < 1) {
-					return undef, "misplaced operator '" . substr($action, 1) . "'";
+					return undef, "misplaced unary operator '" . substr($action, 1) . "'";
 				}
 				my $arg = pop @stack;
 				push @stack, {'type' => 'unary', 'argument' => $arg, 'op' => substr($action, 1)};
 			} else {
 				# Binary operator
 				if (scalar @stack < 2) {
-					return undef, "misplaced operator '$action'";
+					return undef, "misplaced binary operator '$action'";
 				}
 				my $right = pop @stack;
 				my $left = pop @stack;
@@ -447,7 +447,8 @@ sub fixExpression {
 
 		return {
 			'type' => 'unary',
-			'argument' => $neArg,
+			'op' => $e->{'op'},
+			'argument' => $newArg,
 		}, undef;
 	}
 
@@ -489,6 +490,9 @@ sub parse {
 }
 
 # use Data::Dumper;
+
+# print( Dumper( parse("-x") ) );
 # print( Dumper(parse('exists(x, L(x, x) & H(x,x))') ) );
 
-return 1;
+#return 1;
+1;
