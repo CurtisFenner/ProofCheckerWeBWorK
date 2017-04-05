@@ -403,6 +403,8 @@ sub Match {
 	}
 }
 
+# PUBLIC
+# RETURNS a copy of 'self' with all instances of 'pattern' replaced with 'replacement'
 sub Replace {
 	my $self = shift;
 	my $pattern = shift;
@@ -410,6 +412,56 @@ sub Replace {
 
 	my $tree = _substitute($self -> {'tree'}, $pattern -> {'tree'}, $replacement -> {'tree'});
 	return _form($tree);
+}
+
+# PRIVATE
+# RETURNS (a ref to) an array of all copies of 'self' that can be made
+# by replacing a single instance of 'pattern' with 'replacement'
+sub _replacements {
+	my $tree = shift;
+	my $pattern = shift;
+	my $replacement = shift;
+
+	my @output = ();
+	if (_same($tree, $pattern)) {
+		@output = ($replacement);
+	}
+
+	if (ref($tree) ne 'HASH') {warn("_replacements given non- HASH ref object!");}
+
+	# shallow copy, replacing each ref field with
+	# all of its replacements
+	foreach my $key (keys %$tree) {
+		my $value = $tree->{$key};
+		if (ref($value) eq 'HASH') {
+			# recursion!
+			my $subs = _replacements($value, $pattern, $replacement);
+			foreach my $sub (@$subs) {
+				my $add = {%$tree};
+				$add->{$key} = $sub;
+				push @output, $add;
+			}
+		} else {
+			# dumb scalar; do not replace
+		}
+	}
+
+	return \@output;
+}
+
+# PUBLIC
+# RETURNS (a ref to) an array of all copies of 'self' that can be made
+# by replacing a single instance of 'pattern' with 'replacement'
+sub Replacements {
+	my $self = shift;
+	my $pattern = shift;
+	my $replacement = shift;
+
+	my $replacements = _replacements($self->{'tree'}, $pattern->{'tree'}, $replacement->{'tree'});
+	for (my $i = 0; $i < scalar @$replacements; $i++) {
+		$replacements->[$i] = _form($replacements->[$i]);
+	}
+	return $replacements;
 }
 
 1;

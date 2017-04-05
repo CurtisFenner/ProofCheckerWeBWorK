@@ -276,6 +276,62 @@ our %ProofRules = (
 			return 0;
 		}
 	},
+########################################################################################################################
+	"substitution" => {
+		name => 'Substitution Property of Equality',
+		depends => ["'A = B' statement", "any statement using 'A' in 'A = B'"],
+		test => sub {
+			my $line = shift;
+			my $aeqb = shift;
+			my $fa = shift;
+
+			# check the referenced statement is an equality
+			my $eqPattern = E('@a = @b');
+			my $ab = $aeqb->Match($eqPattern);
+			if (!$ab) {
+				my $output = 'The substitution property of equality needs to be given two expressions that are equal to one another, for example, \( f(s) = g(t) \).';
+				$output .= '<br>The statement \( ' . $aeqb->TeX() . ' \) should be a statement equating two expressions.';
+				return $output;
+			}
+
+			my $output = "";
+
+			my $from = $ab->{'a'};
+			my $to = $ab->{'b'};
+
+			for (my $first = 0; $first < 2; $first++) {
+				# generate whether or not $line follows from this substitution
+				# (in from --> to direction)
+				my $replacements = $fa->Replacements($from, $to);
+				my $shouldHintOnlyOneSub = 0;
+
+				foreach my $replacement (@$replacements) {
+					if ($replacement->Same($line)) {
+						# a valid deduction
+						return 0;
+					} elsif ($replacement->Contains($from)) {
+						# a second replacement is possible
+						$shouldHintOnlyOneSub = 1;
+					}
+				}
+
+				$output .= '\( ' . $line->TeX() . ' \) cannot be made by substituting a \('
+					. $from->TeX() . ' \) with a \(' . $to->TeX() . ' \).<br>';
+				if ($shouldHintOnlyOneSub) {
+					$output .= 'HINT: This deduction can only make <em>one</em> substitution. Change only one \( '
+						. $from->TeX() . ' \) into a \( ' . $to->TeX() . ' \) at a time.<br>';
+				} else {
+					$output .= 'HINT: Did you accidentally flip the two line numbers in the reason?<br>';
+				}
+
+				$from = $ab->{'b'};
+				$to = $ab->{'a'};
+			}
+
+			# no valid replacement found
+			return $output;
+		},
+	},
 );
 
 return 1;

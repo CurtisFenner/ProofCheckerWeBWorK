@@ -64,9 +64,27 @@
 		border: 2px solid #F88;
 	}
 
+	:link {
+		font-weight: bold;
+	}
 	</style>
 </head>
 <body>
+	<h1>How to use this help</h1>
+
+	<p class=starred>Starred lines give directions or hints
+	for the tutorial problems.
+
+	<p><del>Struck-through text</del> indicates that
+	a feature is not (yet) available.
+
+	<p>Read the <a href="#tutorial">tutorial</a> for a walkthrough
+	of how to solve the first two tutorial questions.
+
+	<p>Skip to the <a href="#quick">quick reference</a> for a guide
+	of how to use specific notations and deduciton rules.
+
+	<hr>
 	<h1>Proof Questions - Overview</h1>
 
 	<p>A <strong>proof question</strong> on WeBWorK asks you to formally
@@ -176,7 +194,7 @@
 		<li><del><code>all x loves(x, icecream)</code></del>
 	</ul>
 
-	<h3>A simple example - WeBWorK</h3>
+	<h3 id=tutorial>A simple example - WeBWorK</h3>
 
 	<p>Here is how the problem would be presented to you in WeBWorK.
 	<p class=starred>This is the first exercise assigned to you;
@@ -353,7 +371,7 @@
 
 	<hr>
 
-	<h2>Symbols and Syntax Reference</h2>
+	<h2 id=quick>Symbols and Syntax Reference</h2>
 
 	<h3>and, conjunction</h3>
 	<h4>How to type and/conjunction statements</h4>
