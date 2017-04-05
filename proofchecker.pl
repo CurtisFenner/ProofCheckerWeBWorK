@@ -470,7 +470,8 @@ sub show {
 
 	# Render the description of the available deduction rules
 	main::TEXT("<hr>\n");
-	main::TEXT("<b><a href='http://www.curtisfenner.com/ProofCheckerWeBWorK/help.html'>Click here for an explanation of how to do proof questions on WeBWorK</a></b>");
+	main::TEXT("<p><b><a href='http://www.curtisfenner.com/ProofCheckerWeBWorK/help.html'>"
+		. "Click here for an explanation of how to do proof questions on WeBWorK</a></b></p>");
 	main::TEXT("<hr>\n");
 	main::TEXT('Using the provided statements and deduction rules, prove that \(' . $self->{'target'}->TeX() . '\).' . $main::BR);
 	main::TEXT('You do <em>not</em> need to use all of the blanks.' . $main::BR);
@@ -633,9 +634,11 @@ sub show {
 		}
 		$summary .= "</ol>";
 
+		my $BOX_BEGIN = '{\begin{array}{|rl|}\hline' . "\n";
+		my $BOX_END = '\hline\end{array}}' . "\n";
 
 		my $previousDepth = 0;
-		my $latex = '\fbox{\begin{array}{rl}' . "\n";
+		my $latex = $BOX_BEGIN . "\n";
 		for (my $i = 0; $i < scalar @statements; $i++) {
 			my $statement = $statements[$i];
 			my $underbar = $i+1 == scalar @$givens;
@@ -648,12 +651,12 @@ sub show {
 					$latex .= " \\\\";
 
 					$latex .= ' & ';
-					$latex .= ' \begin{fbox}{\begin{array}{rl}' . "\n";
+					$latex .= $BOX_BEGIN;
 					$underbar = 1;
 				} elsif ($statement->{'indent'} < $previousDepth) {
 					# This statement comes after the end of a subproof
 					$previousDepth = $statement->{'indent'};
-					$latex .= '\end{array}}' . " \\\\ \\\\ \n";
+					$latex .= $BOX_END . " \\\\ \\\\ \n";
 				}
 				$latex .= ($i+1) . '. & ' . $statement->TeX();
 
@@ -668,10 +671,10 @@ sub show {
 			}
 		}
 		while ($previousDepth > 0) {
-			$latex .= '\end{array}}';
+			$latex .= $BOX_END;
 			$previousDepth--;
 		}
-		$latex .= '\end{array}}';
+		$latex .= $BOX_END;
 
 		# Check that the correct thing was proved by the student
 		my $proved = 0;
