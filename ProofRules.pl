@@ -149,11 +149,29 @@ our %ProofRules = (
 			if (!$fam) {
 				return $forall->Tostr() . " isn't a for-all statement; the 'A' column should indicate a for-all statement";
 			}
-			my $instancePattern = $fam -> {'predicate'} -> Replace( $fam -> {'variable'}, E('@x') );
-			if (! $line -> Match($instancePattern)) {
-				return '\(' . $line->TeX() . '\) is not a valid instantiation of \(' . $forall->TeX() . '\)';
+
+			my $pattern = $forall;
+			my $uniques = "abcdefghijkl";
+			while (1) {
+				my $hole = E('@' . substr($uniques, 0, 1));
+				$uniques = substr($uniques, 1);
+
+				# capture for-all
+				my $quantified = $pattern->Match($forallPattern);
+				if (!$quantified) {
+					# the left side never matched
+					return '\(' . $line->TeX() . '\) is not a valid instantiation of \(' . $forall->TeX() . '\)';
+				}
+
+				# unwrap one for-all
+				$pattern = $quantified->{'predicate'}->Replace($quantified->{'variable'}, $hole);
+
+				my $instanceMatches = $line->Match($pattern);
+				if ($instanceMatches) {
+					return 0;
+				}
 			}
-			return 0;
+			# not reached
 		},
 	},
 ########################################################################################################################
