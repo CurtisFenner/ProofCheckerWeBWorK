@@ -635,7 +635,7 @@ sub show {
 		$summary .= "</ol>";
 
 		my $BOX_BEGIN = '{\begin{array}{|rl|}\hline' . "\n";
-		my $BOX_END = '\hline\end{array}}' . "\n";
+		my $BOX_END = '\hline\end{array}} \\\\ ' . "\n";
 
 		my $previousDepth = 0;
 		my $latex = $BOX_BEGIN . "\n";
@@ -675,6 +675,8 @@ sub show {
 			$previousDepth--;
 		}
 		$latex .= $BOX_END;
+
+		$latex =~ s/\n+/\n/g;
 
 		# Check that the correct thing was proved by the student
 		my $proved = 0;

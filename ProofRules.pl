@@ -205,15 +205,15 @@ our %ProofRules = (
 			my $andPattern = E('@a & @b');
 			my $am = $line -> Match($andPattern);
 			if (!$am) {
-				return '\(' . $line . '\) should be a statement of the form \(a & b\)';
+				return '\(' . $line->TeX() . '\) should be a statement of the form \(a & b\)';
 			}
-			if ($s1 -> Same($am -> {'a'}) || $s2 -> Same($am -> {'b'})) {
+			if ($s1 -> Same($am -> {'a'}) && $s2 -> Same($am -> {'b'})) {
 				return 0;
 			}
-			if ($s2 -> Same($am -> {'a'}) || $s1 -> Same($am -> {'b'})) {
+			if ($s2 -> Same($am -> {'a'}) && $s1 -> Same($am -> {'b'})) {
 				return 0;
 			}
-			return 'You can only conclude the conjunction of \(' . $s1 . '\) and \(' . $s2 . '\) using conjunction introduction.';
+			return 'You can only conclude the conjunction of \(' . $s1->TeX() . '\) and \(' . $s2->TeX() . '\) using conjunction introduction.';
 		}
 	},
 ########################################################################################################################
