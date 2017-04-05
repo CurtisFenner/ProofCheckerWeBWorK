@@ -328,6 +328,14 @@ sub _match {
 			$matches = $matches && _match($self->{$i}, $pattern->{$i}, $matches);
 		}
 		return $matches;
+	} elsif ($pattern->{'type'} eq 'unary') {
+		if ($self->{'type'} ne 'unary') {
+			return undef;
+		}
+		if ($self->{'op'} ne $pattern->{'op'}) {
+			return undef;
+		}
+		return _match($self->{'argument'}, $pattern->{'argument'}, $matches);
 	} elsif ($pattern->{'type'} eq 'binary') {
 		if ($self->{'type'} ne 'binary') {
 			return undef;
