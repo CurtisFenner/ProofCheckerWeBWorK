@@ -338,6 +338,7 @@ sub _check {
 			if ($deps -> {'problem'}) {
 				# An error was produced while collecting the arguments
 				$messages[$i] = $deps -> {'problem'};
+				$statements->[$i]->{'bad_reference'} = 1;
 			} else {
 				# Expressions were collected successfully, so the rule can be tested
 				$args = $deps -> {'arguments'};
@@ -632,24 +633,45 @@ sub show {
 		}
 		$summary .= "</ol>";
 
-		# Draw latex proof table
-		my $latex = '\begin{array}{r|l}';
+
+		my $previousDepth = 0;
+		my $latex = '\fbox{\begin{array}{rl}' . "\n";
 		for (my $i = 0; $i < scalar @statements; $i++) {
-			my $f = $statements[$i];
-			if (defined($f) && defined($f -> {'indent'})) {
-				my $depth = $f -> {'indent'};
-				my $indent = " " . ("\\qquad" x (2*$depth)) . " ";
-				$latex .= ($i+1) . " & " . $indent . " {" . $f->TeX() . "}"
-			}
-			$text .= "\n";
-			$latex .= " \\\\ \n";
-			if (defined($f) && defined($f -> {'indent'})) {
-				if ($f -> {'assumption'}) {
-					$latex .= " \\hline ";
+			my $statement = $statements[$i];
+			my $underbar = $i+1 == scalar @$givens;
+
+			if (defined($statement) && defined($statement->{'indent'})) {
+				if ($statement->{'indent'} > $previousDepth) {
+					# This statement begins a subproof
+					$previousDepth = $statement->{'indent'};
+					# Make a short space above proof box
+					$latex .= " \\\\";
+
+					$latex .= ' & ';
+					$latex .= ' \begin{fbox}{\begin{array}{rl}' . "\n";
+					$underbar = 1;
+				} elsif ($statement->{'indent'} < $previousDepth) {
+					# This statement comes after the end of a subproof
+					$previousDepth = $statement->{'indent'};
+					$latex .= '\end{array}}' . " \\\\ \\\\ \n";
+				}
+				$latex .= ($i+1) . '. & ' . $statement->TeX();
+
+				if ($statement->{'bad_reference'}) {
+					$latex .= "{}_{\\textit{ bad ref. }}";
 				}
 			}
+			# Include a blank line
+			$latex .= "\\\\\n";
+			if ($underbar) {
+				$latex .= " \\hline \n";
+			}
 		}
-		$latex .= '\end{array}' . "\n";
+		while ($previousDepth > 0) {
+			$latex .= '\end{array}}';
+			$previousDepth--;
+		}
+		$latex .= '\end{array}}';
 
 		# Check that the correct thing was proved by the student
 		my $proved = 0;
@@ -661,6 +683,8 @@ sub show {
 		if (!$proved) {
 			$summary .= $main::BR . "You have not yet justified a conclusion of " . '\(' . ($self -> {'target'})->TeX() . '\)';
 		}
+
+		#$summary .= "<pre style='text-align:left'> " . main::encode_pg_and_html($latex) . "</pre>";
 
 		# construct a hash containing the results of checking this answer
 		# (used internally by WeBWorK)
