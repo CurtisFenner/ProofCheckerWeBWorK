@@ -468,6 +468,7 @@ sub show {
 	@axiomDescriptions = main::lex_sort(@axiomDescriptions);
 
 	# Render the description of the available deduction rules
+	main::TEXT("<hr>\n");
 	main::TEXT('Using the provided statements and deduction rules, prove that \(' . $self->{'target'}->TeX() . '\).' . $main::BR);
 	main::TEXT('You do <em>not</em> need to use all of the blanks.' . $main::BR);
 	main::TEXT("<details><summary>You can use " . (scalar @axiomDescriptions) . " deduction rules.</summary><ul>");
@@ -656,7 +657,7 @@ sub show {
 			}
 		}
 		if (!$proved) {
-			$summary .= $main::BR . "You have not yet concluded " . '\(' . ($self -> {'target'})->TeX() . '\)';
+			$summary .= $main::BR . "You have not yet justified a conclusion of " . '\(' . ($self -> {'target'})->TeX() . '\)';
 		}
 
 		# construct a hash containing the results of checking this answer

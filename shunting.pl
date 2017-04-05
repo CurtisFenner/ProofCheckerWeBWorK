@@ -96,6 +96,11 @@ sub IsFixedConstant {
 		return 1;
 	}
 
+	if ($name eq 'zero') {
+		# vector zero...
+		return 1;
+	}
+
 	# Everything else is a normal name
 	return 0;
 }

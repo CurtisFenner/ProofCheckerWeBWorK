@@ -60,10 +60,16 @@ sub _tex {
 	if ($type eq 'pattern') {
 		return '\fbox{' . $tree->{'name'} . '}';
 	} elsif ($type eq 'constant') {
-		if (length($tree->{'value'}) > 1) {
-			return '\\textrm{' . $tree->{'value'} . '}';
+		my $name = $tree->{'value'};
+
+		if ($name eq 'zero') {
+			return '{\\vec{0}}';
 		}
-		return $tree->{'value'};
+
+		if (length($name) > 1) {
+			return '\\textrm{' . $name . '}';
+		}
+		return $name;
 	} elsif ($type eq 'binary') {
 		my $myP = proofparsing::Precedence($tree->{'op'});
 		my $op = $tree->{'op'};
