@@ -35,6 +35,8 @@
 		font-size: 160%;
 	}
 	h4 {
+		font-size: 130%;
+		opacity: 0.5;
 		padding: 0;
 		margin: 0;
 	}
@@ -330,6 +332,12 @@
 		<strong>Therefore</strong>, <code>rained(today) => grasswet(today)</code>.
 	</blockquote>
 
+	<p><strong>Subproofs are a more complicated form of justification.</strong>
+	A "begin ~~~ sub-proof" starts the subproof; <strong>the type of
+	subproof affects the kind of statement that you're able to ultimately
+	justify with
+	"concludes sub-proof"</strong>.
+
 	<h3>Subproofs example - There Exists</h3>
 
 	<p class=starred>This section corresponds to the second tutorial
@@ -377,24 +385,65 @@
 	<h4>How to type and/conjunction statements</h4>
 	<p><code>a and b</code> or <code>a &amp; b</code> or <code>a ^ b</code>. Use your favorite!
 	<h4>How to deduce and/conjunction statements</h4>
-	<p>Use "Create an And". Statements <code>A</code> and <code>B</code> can be used to deduce <code>A &amp; B</code>
+	<p>Use <b>Create an And</b> to use statements that look like <code>A</code> and <code>B</code>
+		to deduce <code>A &amp; B</code>.
 	<h4>How to use an and/conjunction statement</h4>
-	<p>Use "Eliminate an And". The statement <code>A &amp; B</code> can be used to deduce either <code>A</code> or <code>B</code>.
+	<p>Use <b>Eliminate an And</b> to use a statement that looks like <code>A &amp; B</code>
+		to deduce either <code>A</code> or <code>B</code>.
 
 	<h3>for all, all, every, &forall;</h3>
 	<h4>How to type all/for all/every/&forall; statements</h4>
 	<p>You can write "&forall;x P(x)" as <code>forall(x, P(x))</code> or <code>all(x, P(x))</code>.
 	<h4>How to deduce all/for all/every/&forall; statements</h4>
 	<p>If you have a "general" statement, like <code>P(x)</code>
-		and <code>x</code> is a "free" variable, you can conclude <code>all(x, P(x))</code>.
+		and <code>x</code> is a "free" variable, you can conclude <code>all(x, P(x))</code>
+			using <b>Create a For-All</b>.
 		A variable is <em>not</em> free if it's used in a claim or a given statement.
 	<p>Usually, "eliminate a for-all statement" can be used to create free variables.
 	<h4>How to use a all/for all/every&forall; statement</h4>
 	<p>If you have a statement like <code>all(x, P(x, x))</code> you can use
-		"Eliminate a For-All" to conclude any statement of the form
+		<b>Eliminate a For-All</b> to conclude any statement of the form
 		<code>P(__, __)</code>, for example, <code>P(u, u)</code> or <code>P(3, 3)</code>.
 
 	<h3>exists, there is, &exist;</h3>
 	<h4>How to type exists/there is/&exist;</h4>
 	<p>You can write "&exist;x P(x)" as <code>thereis(x, P(x))</code> or <code>exists(x, P(x))</code> or <code>exist(x, P(x))</code>.
+	<h4>How to deduce exists/there is/&exist;</h4>
+	<p>Use <b>Create a There-Exists</b> to use a"general" statement,
+		like <code>P(c)</code>, to deduce <code>exists(x, P(x))</code>.
+	<h4>How to use a exists/there is/&exist;</h4>
+	<p>Use the <b>begin Eliminate a There-Exists sub-proof</b> to
+		give a concrete name for the object referenced by the quantified statement.
+	<p>For example, <code>exists(x, P(x))</code> can be 'eliminated'
+		into <code>P(alice)</code>.
+	<p>You can <b>conclude sub-proof</b> after deducing any statement
+		that doesn't use <code>alice</code> (or whatever name you picked).
+		This rule will usually be used to deduce more "there-exists" statements
+		(see <a href="#tutorial">tutorial</a> for thorough example).
+
+	<h3>implications, if then, &rArr;</h3>
+	<h4>How to type implications/if then/&rArr;</h4>
+	<p>You can write "A &rArr; B" as <code>A => B</code> or <code>A implies B</code>.
+	<h4>How to deduce implications/if then/&rArr;</h4>
+	<p>You can use <b>begin Suppose to create an Implication sub-proof</b>
+	to suppose a statement <code>P</code> and end up <b>conclude the subproof</b>
+	with a statement <code>P => Q</code>, after having proven <code>Q</code> in
+	the body of the subproof.
+	<h4>How to use implications/if then/&rArr;</h4>
+	<p>Use <b>Modus Ponens</b> to combine <code>P</code> and
+		<code>P => Q</code> to deduce <code>Q</code>.
+
+	<h3>equality, =</h3>
+	<h4>How to type equality/=</h4>
+	<p>You can write "a = b" as <code>a = b</code>.
+	<h4>How to use equality/=</h4>
+	<p>You can use <b>Substitution Property of Equality</b> to
+		<em>substitute</em> any two equal expressions for one another.
+	<p>For example, using <code>7 = 9 - 2</code> and
+		<code>f(7) + 15 = 3</code>,
+		you can deduce <code>f(9 - 2) + 15 = 3</code>.
+	<p>This is also helpful for <em>transitivity</em>;
+		<code>a = b</code> can be used to substitute <code>a</code> for
+		<code>b</code> in <code>b = c</code>, allowing you to deduce
+		<code>a = c</code>.
 </body>
