@@ -29,19 +29,35 @@ our %ProofRules = (
 			my $instancePattern = $fam -> {'predicate'} -> Replace( $fam -> {'variable'}, E('@x') );
 			my $var = $freestatement -> Match($instancePattern);
 			if (!$var) {
-				return $freestatement . " cannot be generalized to " . $line;
+				return '\(' . $freestatement->TeX() . '\) cannot be generalized to \(' . $line->TeX() . '\)';
 			}
+
+			if ($var->{'x'}->{'tree'}->{'type'} ne 'constant') {
+				return '\(' . $var->{'x'}->TeX() . '\) is not a variable, and so it cannot be generalized by "Create a For-All".';
+			}
+
 			# ex. var: z
-			# (ii) `var` doesn't appear in the for-all conclusion
+			# (ii) `var` doesn't appear in the for-all conclusion any more
 			my $cons = $line -> Contains($var->{'x'});
-			if ($cons) {
-				return $var->{'x'} . " should be eliminated from the generalization " . $line;
+			if ($cons && !$var->{'x'}->Same($fam->{'variable'}) ) {
+				return '\(' . $var->{'x'}->TeX() . '\)'
+					. ' should be eliminated from the generalization \(' . $line->TeX() . '\)';
 			}
+
+			# var is a variable, and not a constant
+			if (proofparsing::IsFixedConstant($var->{'x'}->{'tree'}->{'value'})) {
+				return '\(' . $var->{'x'}->TeX() . '\)'
+					. ' is not a variable, so it cannot be generalized by "Create a For-All".';
+			}
+
 			# (i) `var` doesn't occur in an accessible assumption
 			foreach my $assumption (@scope) {
 				if ($assumption -> {'assumption'}) {
 					if ($assumption -> Contains($var->{'x'})) {
-						return $var . " is not a free variable since it was introduced in the assumption " . $assumption;
+						return '\(' . $var->{'x'}->TeX() . '\)'
+							. ' is not a free variable since it was introduced in the assumption'
+							. ' \('. $assumption->TeX() . '\).'
+							. '<br>HINT: Try using a different name.';
 					}
 				}
 			}
@@ -185,12 +201,17 @@ our %ProofRules = (
 			my $andPattern = E('@a & @b');
 			my $am = $and -> Match($andPattern);
 			if (!$am) {
-				return '\(' . $and->TeX() . '\) should be a statement of the form \(a & b\)';
+				return '\(' . $and->TeX() . '\)'
+				. ' should be a statement of the form \(a \wedge b\)'
+				. ' to be used by "Eliminate an And".';
 			}
 			if ($line -> Same($am -> {'a'}) || $line -> Same($am -> {'b'})) {
 				return 0;
 			}
-			return 'You can only conclude \(' . $am->{'a'}->TeX() . '\) or \(' . $am->{'b'}->TeX() . '\) using conjunction elimination on \(' . $and->TeX() . '\)';
+			return 'You can only conclude either '
+				. '\(' . $am->{'a'}->TeX() . '\)'
+				. ' or \(' . $am->{'b'}->TeX() . '\)'
+				. ' using "Eliminate an And" on \(' . $and->TeX() . '\)';
 		}
 	},
 ########################################################################################################################
