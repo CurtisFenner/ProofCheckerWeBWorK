@@ -79,29 +79,35 @@ our %ProofRules = (
 			my $existsPattern = E('exists(@variable, @predicate)');
 			my $em = $thereExists -> Match($existsPattern);
 			if (!$em) {
-				return "this line should be a there-exists statement";
+				return 'The line \(' . $line->TeX() . '\) should be a there-exists statement'
+					. ' to be eliminated by this subproof.';
 			}
 
 			my $predicatePattern = $em->{'predicate'} -> Replace($em->{'variable'}, E('@v'));
 			my $var = $line -> Match($predicatePattern);
 			if (!$var) {
-				return $line . " is not an instantiation of " . $thereExists;
+				return '\(' . $line->TeX() . '\) is not an instantiation of \(' . $thereExists->TeX() . '\)';
 			}
 
 			if ($var -> {'v'} -> {'tree'} -> {'type'} ne 'constant') {
-				return "you must instantiate to a name, not a complex expression like " . $var -> {'v'} . " with type " . $var->{'v'}->{'tree'}->{'type'};
+				return 'You must instantiate to a name, not a complex '
+					. $var->{'v'}->{'tree'}->{'type'}
+					.' expression like \(' . $var -> {'v'}->TeX() . '\).';
 			}
-			if (!($var -> {'v'} -> {'tree'} -> {'value'} =~ /^[a-zA-Z]+$/)) {
-				return "you must instantiate to a name, not a number/constant like " . $var -> {'v'};
+			if (proofparsing::IsFixedConstant($var -> {'v'} -> {'tree'} -> {'value'})) {
+				return '\(' . $var -> {'v'}->TeX() . '\) is a constant, not a name, so it cannot be used by this subproof.';
 			}
 			if ($thereExists -> Contains($var -> {'v'})) {
-				return "the instantiated name " . $var->{'v'} . " must not appear in " . $thereExists;
+				return 'The instantiated name \(' . $var->{'v'}->TeX()
+					. '\) must not already appear in \(' . $thereExists->TeX() . '\).'
+					. '<br>HINT: Try using a different name.';
 			}
 
 			foreach my $assumption (@scope) {
 				if ($assumption -> {'assumption'}) {
 					if ($assumption -> Contains($var->{'v'})) {
-						return "You cannot use the name " . $var . " because it is used in assumption " . $assumption;
+						return 'You cannot use the name \(' . $var->TeX()
+							. '\) because it is used in assumption \(' . $assumption->TeX() . '\)';
 					}
 				}
 			}
@@ -120,13 +126,15 @@ our %ProofRules = (
 			my @scope = @$scope_ref;
 
 			if ($line -> Contains($opening -> {'var'})) {
-				return "The conclusion of an 'eliminate there-exists subproof' must not use the name \$" . $opening->{'var'}->TeX() . "\$ used in the claim.";
+				return 'The conclusion of an "Suppose name of existential" sub-proof must not use the name'
+					. ' \(' . $opening->{'var'}->TeX() . '\)'
+					. ', because it was used in the claim.';
 			}
 
 			my $top = $scope[(scalar @scope) - 1];
 			if (!($top -> Same($line))) {
 				return "The conclusion of an 'eliminate there-exists subproof' must have been proven already in the subproof (on the previous line)."
-					. "<br>However, \\( " . $line->TeX() . " \\) was not proven in this subproof.";
+					. '<br>However, \( ' . $line->TeX() . ' \) was not proven in this subproof.';
 			}
 			return 0;
 		},
@@ -142,12 +150,13 @@ our %ProofRules = (
 			my $existsPattern = E('exists(@variable, @predicate)');
 			my $em = $line -> Match($existsPattern);
 			if (!$em) {
-				return "\\(" . $line->TeX() . "\\) must be a there-exists statement to be deduced from existential-introduction.";
+				return '\(' . $line->TeX() . '\) must be a there-exists statement to be deduced from existential-introduction.';
 			}
 			my $instantiationPattern = $em -> {'predicate'} -> Replace($em -> {'variable'}, E('@v'));
 			if (! $stat->Match($instantiationPattern) ) {
 				return '\(' . $stat->TeX() . '\) cannot be generalized as \(' . $line->TeX() . '\).<br>'
-					. 'To conclude \(' . $line->TeX() . '\), you must use a statement that looks like \(' . $em->{'predicate'}->Replace($em->{'variable'}, E('u'))->TeX() . '\)';
+					. 'To conclude \(' . $line->TeX() . '\), you must use a statement that looks like'
+					. ' \(' . $em->{'predicate'}->Replace($em->{'variable'}, E('u'))->TeX() . '\)';
 			}
 			return 0;
 		},
@@ -163,7 +172,7 @@ our %ProofRules = (
 			my $forallPattern = E('forall(@variable, @predicate)');
 			my $fam = $forall -> Match($forallPattern);
 			if (!$fam) {
-				return $forall->Tostr() . " isn't a for-all statement; the 'A' column should indicate a for-all statement";
+				return '\(' . $forall->TeX() . '\) isn\'t a for-all statement; the "A" column should indicate a for-all statement';
 			}
 
 			my $pattern = $forall;
