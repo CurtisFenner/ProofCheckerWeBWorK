@@ -77,9 +77,6 @@
 	<p class=starred>Starred lines give directions or hints
 	for the tutorial problems.
 
-	<p><del>Struck-through text</del> indicates that
-	a feature is not (yet) available.
-
 	<p>Read the <a href="#tutorial">tutorial</a> for a walkthrough
 	of how to solve the first two tutorial questions.
 
@@ -158,26 +155,23 @@
 
 	<p><strong>Predicates</strong> like <code>x is mortal</code>
 	are typically written as <code>mortal(x)</code> in math.
-	WeBWorK allows you to write predicates in any of the three ways:
+	WeBWorK allows you to write predicates in any of these two ways:
 	<ul>
-		<li><code>x is a mortal</code>
 		<li><code>x is mortal</code>
 		<li><code>mortal(x)</code>
 	</ul>
-	<p>All three forms are equivalent. You can use whichever you
+	<p>Both forms are equivalent. You can use whichever you
 	prefer.
 
 
 	<p>To express a concept like "a man is a mortal", we have to
 	state it as an <strong>implication (if ... then ...)</strong>.
-	You can use
-	<del><code>if ... then ...</code> or</del> <code>=&gt;</code> to create
+	You can use <code>=&gt;</code> to create
 	implications.
 
-	<p>For example, "a man is a mortal" might be written as either
+	<p>For example, "a man is a mortal" might be written as
 	<ul>
-		<li><del><code>if x is a man then x is a mortal</code></del>
-		<li><code>x is a man => x is a mortal</code>
+		<li><code>x is man => x is mortal</code>
 	</ul>
 
 	<p>General statements like those involving the
@@ -192,8 +186,6 @@
 	<ul>
 		<li><code>forall(x, loves(x, icecream))</code>
 		<li><code>all(x, loves(x, icecream))</code>
-		<li><del><code>forall x loves(x, icecream)</code></del>
-		<li><del><code>all x loves(x, icecream)</code></del>
 	</ul>
 
 	<h3 id=tutorial>A simple example - WeBWorK</h3>
@@ -206,8 +198,8 @@
 		alt="(WeBWorK representation of 'Socrates is mortal' syllogism)">
 
 	<p>You can recognize that we want to use
-	<code>x is a man => x is a mortal</code>
-	together with the fact that <code>Socrates is a man</code>.
+	<code>x is man => x is mortal</code>
+	together with the fact that <code>Socrates is man</code>.
 	The deduction rule that allows us to use <code>A => B</code> and
 	<code>A</code>
 	together to conclude <code>B</code> is called
@@ -277,7 +269,7 @@
 	in this way is not easy.
 
 	<hr>
-	<h2>Suproofs Example</h2>
+	<h2>Subproofs Example</h2>
 
 	<p>Sometimes in proofs we need something that looks like this:
 
@@ -348,13 +340,13 @@
 	thing that exists:
 
 	<blockquote>
-		1. <code>forall n, P(n) => Q(n)</code>.<br>
-		2. <code>exists x, P(x)</code>.<br>
+		1. <code>forall(n, P(n) => Q(n))</code>.<br>
+		2. <code>exists(x, P(x))</code>.<br>
 		3. <strong>Suppose</strong> that "x" is called <code>bob</code>, i.e., <code>P(bob)</code>.
 		<div class=indent>
 			4. <code>P(bob) => Q(bob)</code> from (1.).<br>
 			5. <code>Q(bob)</code> from (3.) and (4.).<br>
-			6. <code>exists x, Q(x)</code> from (5.).<br>
+			6. <code>exists(x, Q(x))</code> from (5.).<br>
 		</div>
 		7. <strong>Conclude</strong> <code>exists x, Q(x)</code>.
 	</blockquote>
