@@ -470,7 +470,7 @@ sub show {
 
 	# Render the description of the available deduction rules
 	main::TEXT("<hr>\n");
-	main::TEXT("<p><b><a href='http://www.curtisfenner.com/ProofCheckerWeBWorK/help.html'>"
+	main::TEXT("<p><b><a href='http://www-personal.umich.edu/~cwfenner/ProofCheckerWeBWorK/help.html'>"
 		. "Click here for an explanation of how to do proof questions on WeBWorK</a></b></p>");
 	main::TEXT("<hr>\n");
 	main::TEXT('Using the provided statements and deduction rules, prove that \(' . $self->{'target'}->TeX() . '\).' . $main::BR);
@@ -542,7 +542,7 @@ sub show {
 					if ($k eq 'conclude') {
 						push @axiomLabels, "Conclude sub-proof";
 					} elsif (defined($rule->{'open'})) {
-						push @axiomLabels, 'begin ' . $rule->{'name'} . ' sub-proof';
+						push @axiomLabels, $rule->{'name'} . ' [sub-proof]';
 					} else {
 						push @axiomLabels, $rule->{'name'};
 					}
