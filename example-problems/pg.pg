@@ -1,0 +1,53 @@
+#---------------------------------------------------------------------------------------------------------------------
+# tagging and description section
+#---------------------------------------------------------------------------------------------------------------------
+
+# DESCRIPTION
+# Sample WeBWorK problem, using PGML
+# ENDDESCRIPTION
+# Library tagging would go here
+
+#---------------------------------------------------------------------------------------------------------------------
+# initialization section
+#---------------------------------------------------------------------------------------------------------------------
+
+DOCUMENT();
+
+# Load the "standard" webwork modules
+loadMacros(
+	"PGstandard.pl",
+	"MathObjects.pl",
+	"PGML.pl",
+	"parserMultiAnswer.pl"
+);
+
+# Load the proof modules
+loadMacros(
+	"proofchecker.pl",
+	'ProofFormula.pl',
+	'ProofRules.pl'
+);
+
+# Create a new proof problem.
+# 'P(cos(5)+1)' is the statement that must be proven
+# 1 is the number of blank lines to provide
+$proof = new ProofChecker('P( cos(5) + 1 )', 1);
+
+# Give a hypothesis of the proof that the student is given to be true
+$proof -> given('forall(x, P(x+1) )');
+# Multiple hypotheses can be given
+$proof -> given('forall(y, Q(y+1) )');
+
+# Include an "axiom" (what the code calls deduction rules)
+# These rules are defined in ProofRules.pl.
+$proof -> axiom($ProofRules::ProofRules{'universal_introduction'});
+$proof -> axiom($ProofRules::ProofRules{'universal_elimination'});
+$proof -> axiom($ProofRules::ProofRules{'existential_introduction'});
+$proof -> axiom($ProofRules::ProofRules{'existential_elimination'});
+# (You can also define your own rules in this document, but they
+# require a bit of code [20 - 50 lines])
+
+# Display the proof to the student
+$proof -> show();
+
+ENDDOCUMENT();

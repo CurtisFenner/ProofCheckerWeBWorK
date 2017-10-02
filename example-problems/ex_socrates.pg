@@ -1,0 +1,49 @@
+#---------------------------------------------------------------------------------------------------------------------
+# tagging and description section
+#---------------------------------------------------------------------------------------------------------------------
+
+# DESCRIPTION
+# Logic excercise 5
+# ENDDESCRIPTION
+
+#---------------------------------------------------------------------------------------------------------------------
+# initialization section
+#---------------------------------------------------------------------------------------------------------------------
+
+DOCUMENT();
+loadMacros(
+	"PGstandard.pl",
+	"MathObjects.pl",
+	"PGML.pl",
+	"proofchecker.pl",
+	"parserMultiAnswer.pl"
+);
+loadMacros('ProofFormula.pl');
+
+loadMacros('ProofRules.pl');
+
+BEGIN_TEXT
+
+Visit the link below for a walkthrough of this problem!
+
+END_TEXT
+
+$proof = new ProofChecker('Socrates is mortal', 2);
+
+$proof -> given('all(x, x is man => x is mortal)');
+$proof -> given('Socrates is man');
+
+# $proof->hint(1, 'man(Socrates) => mortal(Socrates)');
+
+# Define an "axiom" (a justification for statements that appears in the drop-down)
+
+$proof -> axiom($ProofRules::ProofRules{'universal_introduction'});
+$proof -> axiom($ProofRules::ProofRules{'universal_elimination'});
+$proof -> axiom($ProofRules::ProofRules{'modus_ponens'});
+
+$proof -> show();
+
+
+ENDDOCUMENT();
+
+

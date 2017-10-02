@@ -1,0 +1,42 @@
+#---------------------------------------------------------------------------------------------------------------------
+# tagging and description section
+#---------------------------------------------------------------------------------------------------------------------
+
+# DESCRIPTION
+# Logic excercise 5
+# ENDDESCRIPTION
+
+#---------------------------------------------------------------------------------------------------------------------
+# initialization section
+#---------------------------------------------------------------------------------------------------------------------
+
+DOCUMENT();
+loadMacros(
+	"PGstandard.pl",
+	"MathObjects.pl",
+	"PGML.pl",
+	"proofchecker.pl",
+	"parserMultiAnswer.pl"
+);
+loadMacros('ProofFormula.pl');
+
+loadMacros('ProofRules.pl');
+
+$proof = new ProofChecker('exists(x, Q(x))', 5);
+
+$proof -> given('all(x, P(x) => Q(x))');
+$proof -> given('exists(x, P(x))');
+
+# Define an "axiom" (a justification for statements that appears in the drop-down)
+
+$proof -> axiom($ProofRules::ProofRules{'existential_elimination'});
+$proof -> axiom($ProofRules::ProofRules{'existential_introduction'});
+$proof -> axiom($ProofRules::ProofRules{'universal_elimination'});
+$proof -> axiom($ProofRules::ProofRules{'modus_ponens'});
+
+$proof -> show();
+
+
+ENDDOCUMENT();
+
+

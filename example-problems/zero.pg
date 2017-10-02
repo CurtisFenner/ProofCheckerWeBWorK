@@ -1,0 +1,66 @@
+#---------------------------------------------------------------------------------------------------------------------
+# tagging and description section
+#---------------------------------------------------------------------------------------------------------------------
+
+# DESCRIPTION
+# Logic excercise 5
+# ENDDESCRIPTION
+
+#---------------------------------------------------------------------------------------------------------------------
+# initialization section
+#---------------------------------------------------------------------------------------------------------------------
+
+DOCUMENT();
+loadMacros(
+	"PGstandard.pl",
+	"MathObjects.pl",
+	"PGML.pl",
+	"proofchecker.pl",
+	"parserMultiAnswer.pl"
+);
+loadMacros('ProofFormula.pl');
+
+loadMacros('ProofRules.pl');
+
+BEGIN_TEXT
+
+This problem is a lot more challenging. You will prove that \( 0 * x \) is  \( 0 \). <br>
+
+You're given several things: <br>
+
+1. the reflexive property; anything is equal to itself <br>
+2. 0 is the additive (left) identity <br>
+2. 0 is the additive (right) identity <br>
+3. multiplication on left distributes over addition <br>
+4. multiplication on right distributes over addition <br>
+5. a number and its the additive inverse sum to 0 <br>
+6. + is an associative operation
+
+END_TEXT
+
+$proof = new ProofChecker('forall(x, 0*x = 0)', 20);
+
+$proof -> given('forall(x, x = x)');
+$proof -> given('forall(x, 0 + x = x)');
+$proof -> given('forall(x, x + 0 = x)');
+$proof -> given('forall(x,  forall(y,   forall(z,   x * (y+z) = x*y + x*z)))');
+$proof -> given('forall(x,  forall(y,   forall(z,   (y+z) * x = y*x + z*x)))');
+$proof -> given('forall(x, x + (-x) = 0 )');
+$proof -> given('forall(x, forall(y, forall(z,   (x+y)+z = x+(y+z)   )))');
+
+# Define an "axiom" (a justification for statements that appears in the drop-down)
+
+$proof -> axiom($ProofRules::ProofRules{'universal_introduction'});
+$proof -> axiom($ProofRules::ProofRules{'universal_elimination'});
+$proof -> axiom($ProofRules::ProofRules{'existential_introduction'});
+$proof -> axiom($ProofRules::ProofRules{'existential_elimination'});
+$proof -> axiom($ProofRules::ProofRules{'conjunction_elimination'});
+$proof -> axiom($ProofRules::ProofRules{'conjunction_introduction'});
+$proof -> axiom($ProofRules::ProofRules{'modus_ponens'});
+$proof -> axiom($ProofRules::ProofRules{'implication_introduction'});
+$proof -> axiom($ProofRules::ProofRules{'substitution'});
+
+$proof -> show();
+
+
+ENDDOCUMENT();

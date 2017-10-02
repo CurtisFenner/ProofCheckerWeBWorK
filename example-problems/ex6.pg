@@ -3,9 +3,8 @@
 #---------------------------------------------------------------------------------------------------------------------
 
 # DESCRIPTION
-# Sample WeBWorK problem, using PGML
+# Logic excercise 5
 # ENDDESCRIPTION
-# Library tagging would go here
 
 #---------------------------------------------------------------------------------------------------------------------
 # initialization section
@@ -23,22 +22,22 @@ loadMacros('ProofFormula.pl');
 
 loadMacros('ProofRules.pl');
 
-# 'P(cos(5)+1)' is the statement that must be proven
-$proof = new ProofChecker('P( cos(5) + 1 )', 1);
+$proof = new ProofChecker('exists(x, L(x))');
 
-# Give a hypothesis of the proof that the student is given to be true
-$proof -> given('forall(x, P(x+1) )');
+$proof -> given('forall(x, F(x) => L(x))');
+$proof -> given('exists(y, F(y))');
 
 # Define an "axiom" (a justification for statements that appears in the drop-down)
+
 $proof -> axiom($ProofRules::ProofRules{'universal_introduction'});
 $proof -> axiom($ProofRules::ProofRules{'universal_elimination'});
 $proof -> axiom($ProofRules::ProofRules{'existential_introduction'});
 $proof -> axiom($ProofRules::ProofRules{'existential_elimination'});
-
+$proof -> axiom($ProofRules::ProofRules{'conjunction_elimination'});
+$proof -> axiom($ProofRules::ProofRules{'conjunction_introduction'});
+$proof -> axiom($ProofRules::ProofRules{'modus_ponens'});
 
 $proof -> show();
 
 
 ENDDOCUMENT();
-
-

@@ -1,0 +1,44 @@
+#---------------------------------------------------------------------------------------------------------------------
+# tagging and description section
+#---------------------------------------------------------------------------------------------------------------------
+
+# DESCRIPTION
+# Logic excercise 5
+# ENDDESCRIPTION
+
+#---------------------------------------------------------------------------------------------------------------------
+# initialization section
+#---------------------------------------------------------------------------------------------------------------------
+
+DOCUMENT();
+loadMacros(
+	"PGstandard.pl",
+	"MathObjects.pl",
+	"PGML.pl",
+	"proofchecker.pl",
+	"parserMultiAnswer.pl"
+);
+loadMacros('ProofFormula.pl');
+
+loadMacros('ProofRules.pl');
+
+$proof = new ProofChecker('forall(x, (H(x) => G(x)) )');
+
+$proof -> given('forall(y, (H(y) & F(y)) => G(y) )');
+$proof -> given('forall(z, F(z))');
+
+# Define an "axiom" (a justification for statements that appears in the drop-down)
+
+$proof -> axiom($ProofRules::ProofRules{'universal_introduction'});
+$proof -> axiom($ProofRules::ProofRules{'universal_elimination'});
+$proof -> axiom($ProofRules::ProofRules{'existential_introduction'});
+$proof -> axiom($ProofRules::ProofRules{'existential_elimination'});
+$proof -> axiom($ProofRules::ProofRules{'conjunction_elimination'});
+$proof -> axiom($ProofRules::ProofRules{'conjunction_introduction'});
+$proof -> axiom($ProofRules::ProofRules{'modus_ponens'});
+$proof -> axiom($ProofRules::ProofRules{'implication_introduction'});
+
+$proof -> show();
+
+
+ENDDOCUMENT();
